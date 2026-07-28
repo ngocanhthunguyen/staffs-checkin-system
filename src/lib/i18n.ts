@@ -37,7 +37,7 @@ export const th = {
   history: bi("ประวัติ", "History"),
   corrections: bi("แก้ไขเวลา", "Corrections"),
   dashboard: bi("แดชบอร์ด", "Dashboard"),
-  reports: bi("รายงาน", "Reports"),
+  reports: bi("เงินเดือน", "Payroll"),
   team: bi("ทีมงาน", "Team"),
 
   // Check-in panel
@@ -96,15 +96,29 @@ export const th = {
   inTime: bi("เข้า", "In"),
   outTime: bi("ออก", "Out"),
 
-  // Reports
+  // Reports / Payroll
+  payrollReport: bi("เงินเดือน & ลงเวลา", "Payroll & Timesheets"),
   monthlyReport: bi("รายงานรายเดือน", "Monthly Report"),
-  summaryByStaff: bi("สรุปตามพนักงาน", "Summary by staff"),
+  payPeriodMonthly: bi("รายเดือน", "Monthly"),
+  payPeriodFortnight: bi("รายปักษ์ (14 วัน)", "Fortnightly (14 days)"),
+  payPeriodLabel: bi("รอบจ่ายเงิน", "Pay period"),
+  currentPeriod: bi("รอบปัจจุบัน", "Current period"),
+  summaryByStaff: bi("สรุปตามพนักงาน (สำหรับจ่ายเงิน)", "Summary by staff (for payroll)"),
   allRecords: bi("รายการทั้งหมด", "All records"),
-  noRecordsThisMonth: bi("ไม่มีข้อมูลในเดือนนี้", "No records for this month"),
+  noRecordsThisMonth: bi("ไม่มีข้อมูลในรอบนี้", "No records for this period"),
   days: bi("วัน", "days"),
+  daysWorked: bi("วันทำงาน", "Days worked"),
   stillIn: bi("ยังไม่ออก", "Still in"),
+  incompleteShifts: bi("ลืมลงเวลาออก", "Missing check-out"),
+  incompleteWarning: bi(
+    "มีการลงเวลาไม่ครบ — ไม่นับในชั่วโมงจ่ายเงิน จนกว่าจะแก้ไข",
+    "Incomplete entries are excluded from payable hours until fixed"
+  ),
+  totalPayableHours: bi("ชั่วโมงจ่ายเงินรวม", "Total payable hours"),
+  exportPayroll: bi("ส่งออกเงินเดือน", "Export payroll"),
   go: bi("ดู", "Go"),
   exportCsv: bi("ส่งออก CSV", "Export CSV"),
+  myPayPeriodHours: bi("ชั่วโมงรอบจ่ายเงินนี้", "Hours this pay period"),
 
   // Corrections
   correctionsTitle: bi("แก้ไขเวลา", "Corrections"),

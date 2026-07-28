@@ -3,6 +3,7 @@ import { createClient } from "@/lib/supabase/server";
 import { AppShell } from "@/components/app-shell";
 import { formatDate, formatTime, getHoursBetween } from "@/lib/utils";
 import { th } from "@/lib/i18n";
+import { getFortnightContaining } from "@/lib/pay-period";
 import type { Profile } from "@/types/database";
 
 export default async function HistoryPage() {
@@ -21,6 +22,21 @@ export default async function HistoryPage() {
 
   if (!profile) redirect("/login");
 
+  const payPeriod = getFortnightContaining(new Date());
+
+  const { data: periodRecords } = await supabase
+    .from("attendance")
+    .select("*")
+    .eq("staff_id", user.id)
+    .gte("check_in_at", payPeriod.start.toISOString())
+    .lte("check_in_at", payPeriod.end.toISOString())
+    .order("check_in_at", { ascending: false });
+
+  const payableHours = (periodRecords ?? []).reduce((sum, r) => {
+    if (!r.check_out_at) return sum;
+    return sum + getHoursBetween(r.check_in_at, r.check_out_at);
+  }, 0);
+
   const thirtyDaysAgo = new Date();
   thirtyDaysAgo.setDate(thirtyDaysAgo.getDate() - 30);
 
@@ -31,18 +47,19 @@ export default async function HistoryPage() {
     .gte("check_in_at", thirtyDaysAgo.toISOString())
     .order("check_in_at", { ascending: false });
 
-  const totalHours = (records ?? []).reduce(
-    (sum, r) => sum + getHoursBetween(r.check_in_at, r.check_out_at),
-    0
-  );
-
   return (
     <AppShell profile={profile as Profile}>
       <div className="space-y-6">
         <div>
           <h1 className="text-xl font-bold">{th.myHistory}</h1>
-          <p className="text-sm text-slate-500">
-            {th.last30Days} · {th.totalHours} {totalHours.toFixed(1)} {th.hours}
+          <p className="text-sm text-slate-500">{th.last30Days}</p>
+        </div>
+
+        <div className="rounded-xl bg-blue-50 p-4">
+          <p className="text-xs font-medium text-blue-700">{th.myPayPeriodHours}</p>
+          <p className="text-sm text-blue-600">{payPeriod.label}</p>
+          <p className="mt-1 text-2xl font-bold text-blue-900">
+            {payableHours.toFixed(1)} {th.hours}
           </p>
         </div>
 
@@ -63,7 +80,7 @@ export default async function HistoryPage() {
                     className={`rounded-full px-2.5 py-0.5 text-xs font-medium ${
                       record.check_out_at
                         ? "bg-slate-100 text-slate-600"
-                        : "bg-green-100 text-green-700"
+                        : "bg-amber-100 text-amber-700"
                     }`}
                   >
                     {record.check_out_at ? th.complete : th.open}
@@ -72,7 +89,9 @@ export default async function HistoryPage() {
                 <p className="mt-1 text-sm text-slate-500">
                   {formatTime(record.check_in_at)} →{" "}
                   {record.check_out_at ? formatTime(record.check_out_at) : "—"} ·{" "}
-                  {getHoursBetween(record.check_in_at, record.check_out_at).toFixed(1)} {th.hours}
+                  {record.check_out_at
+                    ? `${getHoursBetween(record.check_in_at, record.check_out_at).toFixed(1)} ${th.hours}`
+                    : th.incompleteShifts}
                 </p>
               </div>
             ))

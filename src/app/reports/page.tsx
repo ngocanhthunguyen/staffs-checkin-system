@@ -1,15 +1,24 @@
 import { redirect } from "next/navigation";
 import { createClient } from "@/lib/supabase/server";
 import { AppShell } from "@/components/app-shell";
+import { PayPeriodFilter } from "@/components/pay-period-filter";
 import { formatDate, formatTime, getHoursBetween } from "@/lib/utils";
 import { th } from "@/lib/i18n";
+import {
+  buildPayrollSummary,
+  getFortnightContaining,
+  listRecentFortnights,
+  resolvePayPeriod,
+  type PayPeriodType,
+} from "@/lib/pay-period";
 import type { Attendance, Profile } from "@/types/database";
 import { ReportsExport } from "@/components/reports-export";
+import { AlertTriangle } from "lucide-react";
 
 export default async function ReportsPage({
   searchParams,
 }: {
-  searchParams: Promise<{ month?: string }>;
+  searchParams: Promise<{ type?: string; month?: string; start?: string }>;
 }) {
   const supabase = await createClient();
   const {
@@ -30,105 +39,111 @@ export default async function ReportsPage({
 
   const params = await searchParams;
   const now = new Date();
-  const [year, month] = (params.month ?? `${now.getFullYear()}-${now.getMonth() + 1}`)
-    .split("-")
-    .map(Number);
+  const type: PayPeriodType =
+    params.type === "fortnight" ? "fortnight" : "monthly";
+  const defaultMonth = `${now.getFullYear()}-${String(now.getMonth() + 1).padStart(2, "0")}`;
+  const period = resolvePayPeriod(type, {
+    month: params.month ?? defaultMonth,
+    start: params.start,
+  });
 
-  const startDate = new Date(year, month - 1, 1);
-  const endDate = new Date(year, month, 0, 23, 59, 59);
+  const fortnightOptions = listRecentFortnights(12).map((p) => ({
+    key: p.key,
+    label: p.label,
+  }));
+  const currentFortnightKey = getFortnightContaining(new Date()).key;
 
   const { data: records } = await supabase
     .from("attendance")
     .select("*, profiles(full_name, department)")
-    .gte("check_in_at", startDate.toISOString())
-    .lte("check_in_at", endDate.toISOString())
+    .gte("check_in_at", period.start.toISOString())
+    .lte("check_in_at", period.end.toISOString())
     .order("check_in_at", { ascending: true });
 
-  const summary = new Map<
-    string,
-    { name: string; department: string | null; days: number; hours: number }
-  >();
-
-  for (const record of records ?? []) {
-    const staffId = record.staff_id;
-    const name = record.profiles?.full_name ?? th.unknown;
-    const department = record.profiles?.department ?? null;
-    const hours = getHoursBetween(record.check_in_at, record.check_out_at);
-
-    const existing = summary.get(staffId) ?? { name, department, days: 0, hours: 0 };
-    existing.days += 1;
-    existing.hours += hours;
-    summary.set(staffId, existing);
-  }
-
-  const monthLabel = startDate.toLocaleDateString("th-TH", { month: "long", year: "numeric" });
+  const summary = buildPayrollSummary(records ?? [], th.unknown);
+  const totalPayableHours = summary.reduce((s, r) => s + r.totalHours, 0);
+  const totalIncomplete = summary.reduce((s, r) => s + r.incompleteShifts, 0);
 
   return (
     <AppShell profile={profile as Profile}>
       <div className="space-y-6">
         <div className="flex items-start justify-between gap-4">
           <div>
-            <h1 className="text-xl font-bold">{th.monthlyReport}</h1>
-            <p className="text-sm text-slate-500">{monthLabel}</p>
+            <h1 className="text-xl font-bold">{th.payrollReport}</h1>
+            <p className="text-sm text-slate-500">{period.label}</p>
           </div>
           <ReportsExport
-            month={params.month ?? `${now.getFullYear()}-${now.getMonth() + 1}`}
-            summary={Array.from(summary.entries()).map(([id, data]) => ({
-              id,
-              ...data,
-            }))}
+            period={period}
+            summary={summary}
             records={(records ?? []) as Attendance[]}
           />
         </div>
 
-        <form className="flex gap-2">
-          <input
-            type="month"
-            name="month"
-            defaultValue={params.month ?? `${now.getFullYear()}-${String(now.getMonth() + 1).padStart(2, "0")}`}
-            className="flex-1 rounded-xl border border-slate-300 px-3 py-2 text-sm"
-          />
-          <button
-            type="submit"
-            className="rounded-xl bg-blue-600 px-4 py-2 text-sm font-medium text-white hover:bg-blue-700"
-          >
-            {th.go}
-          </button>
-        </form>
+        <PayPeriodFilter
+          type={type}
+          month={params.month ?? defaultMonth}
+          fortnightStart={
+            period.type === "fortnight" ? period.key : currentFortnightKey
+          }
+          fortnightOptions={fortnightOptions}
+        />
+
+        <div className="grid grid-cols-2 gap-3">
+          <div className="rounded-xl bg-blue-50 p-4">
+            <p className="text-xs text-blue-700">{th.totalPayableHours}</p>
+            <p className="text-2xl font-bold text-blue-900">
+              {totalPayableHours.toFixed(1)} {th.hours}
+            </p>
+          </div>
+          <div className="rounded-xl bg-amber-50 p-4">
+            <p className="text-xs text-amber-700">{th.incompleteShifts}</p>
+            <p className="text-2xl font-bold text-amber-900">{totalIncomplete}</p>
+          </div>
+        </div>
+
+        {totalIncomplete > 0 && (
+          <div className="flex items-start gap-2 rounded-xl bg-amber-50 px-4 py-3 text-sm text-amber-800">
+            <AlertTriangle className="mt-0.5 h-4 w-4 shrink-0" />
+            <p>{th.incompleteWarning}</p>
+          </div>
+        )}
 
         <section>
           <h2 className="mb-3 text-sm font-semibold uppercase tracking-wide text-slate-500">
             {th.summaryByStaff}
           </h2>
           <div className="space-y-2">
-            {summary.size === 0 ? (
+            {summary.length === 0 ? (
               <p className="rounded-xl bg-slate-100 px-4 py-6 text-center text-sm text-slate-500">
                 {th.noRecordsThisMonth}
               </p>
             ) : (
-              Array.from(summary.entries())
-                .sort((a, b) => b[1].hours - a[1].hours)
-                .map(([id, data]) => (
-                  <div
-                    key={id}
-                    className="flex items-center justify-between rounded-xl border border-slate-200 bg-white px-4 py-3"
-                  >
-                    <div>
-                      <p className="font-medium">{data.name}</p>
-                      {data.department && (
-                        <p className="text-xs text-slate-500">{data.department}</p>
-                      )}
-                    </div>
-                    <div className="text-right">
-                      <p className="font-semibold text-blue-600">
-                        {data.hours.toFixed(1)} {th.hours}
+              summary.map((data) => (
+                <div
+                  key={data.id}
+                  className="flex items-center justify-between rounded-xl border border-slate-200 bg-white px-4 py-3"
+                >
+                  <div>
+                    <p className="font-medium">{data.name}</p>
+                    {data.department && (
+                      <p className="text-xs text-slate-500">{data.department}</p>
+                    )}
+                    {data.incompleteShifts > 0 && (
+                      <p className="text-xs text-amber-600">
+                        {data.incompleteShifts} {th.incompleteShifts}
                       </p>
-                      <p className="text-xs text-slate-500">
-                        {data.days} {th.days}
-                      </p>
-                    </div>
+                    )}
                   </div>
-                ))
+                  <div className="text-right">
+                    <p className="font-semibold text-blue-600">
+                      {data.totalHours.toFixed(1)} {th.hours}
+                    </p>
+                    <p className="text-xs text-slate-500">
+                      {data.daysWorked} {th.daysWorked}
+                    </p>
+                  </div>
+                </div>
+              ))
             )}
           </div>
         </section>
@@ -138,22 +153,33 @@ export default async function ReportsPage({
             {th.allRecords}
           </h2>
           <div className="space-y-2">
-            {(records ?? []).map((record) => (
-              <div
-                key={record.id}
-                className="rounded-xl border border-slate-200 bg-white px-4 py-3 text-sm"
-              >
-                <div className="flex justify-between">
-                  <p className="font-medium">{record.profiles?.full_name}</p>
-                  <p className="text-slate-500">{formatDate(record.check_in_at)}</p>
+            {(records ?? []).map((record) => {
+              const complete = !!record.check_out_at;
+              const hours = complete
+                ? getHoursBetween(record.check_in_at, record.check_out_at)
+                : 0;
+
+              return (
+                <div
+                  key={record.id}
+                  className={`rounded-xl border px-4 py-3 text-sm ${
+                    complete
+                      ? "border-slate-200 bg-white"
+                      : "border-amber-200 bg-amber-50"
+                  }`}
+                >
+                  <div className="flex justify-between">
+                    <p className="font-medium">{record.profiles?.full_name}</p>
+                    <p className="text-slate-500">{formatDate(record.check_in_at)}</p>
+                  </div>
+                  <p className="text-xs text-slate-500">
+                    {formatTime(record.check_in_at)} →{" "}
+                    {record.check_out_at ? formatTime(record.check_out_at) : th.stillIn} ·{" "}
+                    {complete ? `${hours.toFixed(1)} ${th.hours}` : th.incompleteShifts}
+                  </p>
                 </div>
-                <p className="text-xs text-slate-500">
-                  {formatTime(record.check_in_at)} →{" "}
-                  {record.check_out_at ? formatTime(record.check_out_at) : th.stillIn} ·{" "}
-                  {getHoursBetween(record.check_in_at, record.check_out_at).toFixed(1)} {th.hours}
-                </p>
-              </div>
-            ))}
+              );
+            })}
           </div>
         </section>
       </div>
