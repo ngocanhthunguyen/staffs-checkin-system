@@ -40,6 +40,8 @@ create table public.attendance (
   check_in_lng double precision,
   check_out_lat double precision,
   check_out_lng double precision,
+  check_in_photo_path text,
+  check_out_photo_path text,
   notes text,
   created_at timestamptz default now()
 );
@@ -173,3 +175,27 @@ values ('Main Office', 13.7563, 100.5018, 150);
 
 -- Realtime for live dashboard
 alter publication supabase_realtime add table public.attendance;
+
+-- Selfie-on-check-in/out: private storage bucket + policies
+insert into storage.buckets (id, name, public)
+values ('checkin-photos', 'checkin-photos', false)
+on conflict (id) do nothing;
+
+drop policy if exists "Staff can upload own checkin photos" on storage.objects;
+create policy "Staff can upload own checkin photos"
+on storage.objects for insert to authenticated
+with check (
+  bucket_id = 'checkin-photos'
+  and (storage.foldername(name))[1] = auth.uid()::text
+);
+
+drop policy if exists "Staff and managers can view checkin photos" on storage.objects;
+create policy "Staff and managers can view checkin photos"
+on storage.objects for select to authenticated
+using (
+  bucket_id = 'checkin-photos'
+  and (
+    (storage.foldername(name))[1] = auth.uid()::text
+    or public.is_manager_or_admin()
+  )
+);

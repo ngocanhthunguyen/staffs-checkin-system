@@ -1,10 +1,11 @@
 "use client";
 
 import { useState, useTransition } from "react";
-import { MapPin, Loader2 } from "lucide-react";
+import { MapPin, Loader2, ShieldCheck } from "lucide-react";
 import { checkIn, checkOut } from "@/app/actions/attendance";
 import { th } from "@/lib/i18n";
 import { formatDuration, formatTime, formatTodayHeader, getCurrentPosition, getHoursBetween } from "@/lib/utils";
+import { PhotoCapture } from "@/components/photo-capture";
 import type { Attendance, Site } from "@/types/database";
 
 export function CheckInPanel({
@@ -15,6 +16,7 @@ export function CheckInPanel({
   site: Site | null;
 }) {
   const [error, setError] = useState<string | null>(null);
+  const [photoDataUrl, setPhotoDataUrl] = useState<string | null>(null);
   const [isPending, startTransition] = useTransition();
   const isCheckedIn = !!openAttendance;
 
@@ -24,6 +26,12 @@ export function CheckInPanel({
 
   async function handleAction(action: "in" | "out") {
     setError(null);
+
+    if (!photoDataUrl) {
+      setError(th.photoRequired);
+      return;
+    }
+
     startTransition(async () => {
       try {
         let lat: number | undefined;
@@ -36,9 +44,15 @@ export function CheckInPanel({
         }
 
         const result =
-          action === "in" ? await checkIn(lat, lng) : await checkOut(lat, lng);
+          action === "in"
+            ? await checkIn(lat, lng, photoDataUrl)
+            : await checkOut(lat, lng, photoDataUrl);
 
-        if (result.error) setError(result.error);
+        if (result.error) {
+          setError(result.error);
+        } else {
+          setPhotoDataUrl(null);
+        }
       } catch {
         setError(action === "in" ? th.gpsError : th.checkoutError);
       }
@@ -70,6 +84,17 @@ export function CheckInPanel({
         )}
       </div>
 
+      <PhotoCapture
+        key={String(isCheckedIn)}
+        onCapture={setPhotoDataUrl}
+        disabled={isPending}
+      />
+
+      <div className="flex items-start gap-2 rounded-xl bg-slate-50 px-4 py-3 text-xs text-slate-500">
+        <ShieldCheck className="mt-0.5 h-4 w-4 shrink-0 text-slate-400" />
+        <p>{th.photoRequiredHint}</p>
+      </div>
+
       {site && (
         <div className="flex items-start gap-2 rounded-xl bg-blue-50 px-4 py-3 text-sm text-blue-800">
           <MapPin className="mt-0.5 h-4 w-4 shrink-0" />
@@ -86,8 +111,8 @@ export function CheckInPanel({
 
       <button
         onClick={() => handleAction(isCheckedIn ? "out" : "in")}
-        disabled={isPending}
-        className={`flex w-full items-center justify-center gap-2 rounded-2xl py-5 text-lg font-semibold text-white transition-all active:scale-[0.98] disabled:opacity-60 ${
+        disabled={isPending || !photoDataUrl}
+        className={`flex w-full items-center justify-center gap-2 rounded-2xl py-5 text-lg font-semibold text-white transition-all active:scale-[0.98] disabled:opacity-40 ${
           isCheckedIn
             ? "bg-red-600 hover:bg-red-700 shadow-lg shadow-red-200"
             : "bg-blue-600 hover:bg-blue-700 shadow-lg shadow-blue-200"

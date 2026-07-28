@@ -3,8 +3,9 @@ import { createClient } from "@/lib/supabase/server";
 import { AppShell } from "@/components/app-shell";
 import { formatTime, getHoursBetween } from "@/lib/utils";
 import { th } from "@/lib/i18n";
+import { attachSignedPhotoUrls } from "@/lib/photos";
 import type { Attendance, Profile } from "@/types/database";
-import { Users, UserCheck, UserX } from "lucide-react";
+import { Users, UserCheck, UserX, ImageOff } from "lucide-react";
 
 export default async function DashboardPage() {
   const supabase = await createClient();
@@ -39,9 +40,14 @@ export default async function DashboardPage() {
     .gte("check_in_at", todayStart.toISOString())
     .order("check_in_at", { ascending: false });
 
-  const checkedIn = (todayAttendance ?? []).filter((a) => !a.check_out_at);
-  const checkedOut = (todayAttendance ?? []).filter((a) => a.check_out_at);
-  const staffIdsToday = new Set((todayAttendance ?? []).map((a) => a.staff_id));
+  const attendanceWithPhotos = await attachSignedPhotoUrls(
+    supabase,
+    todayAttendance ?? []
+  );
+
+  const checkedIn = attendanceWithPhotos.filter((a) => !a.check_out_at);
+  const checkedOut = attendanceWithPhotos.filter((a) => a.check_out_at);
+  const staffIdsToday = new Set(attendanceWithPhotos.map((a) => a.staff_id));
   const notCheckedIn = (allStaff ?? []).filter((s) => !staffIdsToday.has(s.id));
 
   return (
@@ -75,11 +81,24 @@ export default async function DashboardPage() {
               </p>
             ) : (
               checkedIn.map((record) => (
-                <StaffRow key={record.id} record={record as Attendance} status="in" />
+                <StaffRow key={record.id} record={record} status="in" />
               ))
             )}
           </div>
         </section>
+
+        {checkedOut.length > 0 && (
+          <section>
+            <h2 className="mb-3 text-sm font-semibold uppercase tracking-wide text-slate-500">
+              {th.checkedOutCount} ({checkedOut.length})
+            </h2>
+            <div className="space-y-2">
+              {checkedOut.map((record) => (
+                <StaffRow key={record.id} record={record} status="out" />
+              ))}
+            </div>
+          </section>
+        )}
 
         {notCheckedIn.length > 0 && (
           <section>
@@ -137,19 +156,33 @@ function StatCard({
   );
 }
 
-function StaffRow({
-  record,
-  status,
-}: {
-  record: Attendance & { profiles?: { full_name: string; department: string | null } };
-  status: "in" | "out";
-}) {
+type AttendanceRow = Omit<Attendance, "profiles"> & {
+  profiles?: { full_name: string; department: string | null };
+  checkInPhotoUrl: string | null;
+  checkOutPhotoUrl: string | null;
+};
+
+function StaffRow({ record, status }: { record: AttendanceRow; status: "in" | "out" }) {
   const hours = getHoursBetween(record.check_in_at, record.check_out_at);
+  const photoUrl = status === "in" ? record.checkInPhotoUrl : record.checkOutPhotoUrl;
 
   return (
-    <div className="flex items-center justify-between rounded-xl border border-slate-200 bg-white px-4 py-3">
-      <div>
-        <p className="font-medium">{record.profiles?.full_name ?? th.unknown}</p>
+    <div className="flex items-center gap-3 rounded-xl border border-slate-200 bg-white px-4 py-3">
+      {photoUrl ? (
+        // eslint-disable-next-line @next/next/no-img-element
+        <img
+          src={photoUrl}
+          alt={th.checkInPhoto}
+          className="h-11 w-11 shrink-0 rounded-full object-cover"
+        />
+      ) : (
+        <div className="flex h-11 w-11 shrink-0 items-center justify-center rounded-full bg-slate-100 text-slate-400">
+          <ImageOff className="h-4 w-4" />
+        </div>
+      )}
+
+      <div className="min-w-0 flex-1">
+        <p className="truncate font-medium">{record.profiles?.full_name ?? th.unknown}</p>
         <p className="text-xs text-slate-500">
           {th.inTime} {formatTime(record.check_in_at)}
           {record.check_out_at && ` · ${th.outTime} ${formatTime(record.check_out_at)}`}
@@ -157,8 +190,9 @@ function StaffRow({
           {hours.toFixed(1)} {th.hours}
         </p>
       </div>
+
       <span
-        className={`rounded-full px-2.5 py-0.5 text-xs font-medium ${
+        className={`shrink-0 rounded-full px-2.5 py-0.5 text-xs font-medium ${
           status === "in"
             ? "bg-green-100 text-green-700"
             : "bg-slate-100 text-slate-600"

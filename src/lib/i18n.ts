@@ -48,6 +48,23 @@ export const th = {
   processing: bi("กำลังดำเนินการ...", "Processing..."),
   locationCheck: bi("ตรวจสอบตำแหน่งสำหรับ", "Location check for"),
   radius: bi("รัศมี", "radius"),
+  takePhoto: bi("ถ่ายรูปเพื่อลงเวลา", "Take a photo to check in/out"),
+  retakePhoto: bi("ถ่ายใหม่", "Retake"),
+  photoRequired: bi(
+    "กรุณาถ่ายรูปก่อนลงเวลา",
+    "Please take a photo before checking in/out"
+  ),
+  photoError: bi(
+    "ไม่สามารถใช้กล้องได้ กรุณาลองใหม่",
+    "Could not use the camera. Please try again."
+  ),
+  photoRequiredHint: bi(
+    "ต้องถ่ายรูปทุกครั้งที่ลงเวลา เพื่อป้องกันการลงเวลาแทนกัน",
+    "A photo is required every time to prevent buddy punching"
+  ),
+  viewPhoto: bi("ดูรูป", "View"),
+  checkInPhoto: bi("รูปตอนเข้า", "Check-in photo"),
+  checkOutPhoto: bi("รูปตอนออก", "Check-out photo"),
   gpsError: bi(
     "ไม่สามารถระบุตำแหน่งได้ กรุณาเปิด GPS แล้วลองใหม่",
     "Could not get location. Please enable GPS and try again."

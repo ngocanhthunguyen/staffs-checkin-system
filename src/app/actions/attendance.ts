@@ -6,7 +6,36 @@ import { th } from "@/lib/i18n";
 import { isWithinGeofence } from "@/lib/utils";
 import type { Site } from "@/types/database";
 
-export async function checkIn(lat?: number, lng?: number) {
+type SupabaseServerClient = Awaited<ReturnType<typeof createClient>>;
+
+async function uploadCheckPhoto(
+  supabase: SupabaseServerClient,
+  staffId: string,
+  photoDataUrl: string,
+  kind: "in" | "out"
+): Promise<string | null> {
+  const match = photoDataUrl.match(/^data:image\/(\w+);base64,(.+)$/);
+  if (!match) return null;
+
+  const [, ext, base64] = match;
+  const buffer = Buffer.from(base64, "base64");
+  const path = `${staffId}/${Date.now()}-${kind}.${ext === "jpeg" ? "jpg" : ext}`;
+
+  const { error } = await supabase.storage
+    .from("checkin-photos")
+    .upload(path, buffer, { contentType: `image/${ext}`, upsert: false });
+
+  if (error) {
+    console.error("Photo upload failed:", error.message);
+    return null;
+  }
+
+  return path;
+}
+
+export async function checkIn(lat?: number, lng?: number, photoDataUrl?: string) {
+  if (!photoDataUrl) return { error: th.photoRequired };
+
   const supabase = await createClient();
   const {
     data: { user },
@@ -40,11 +69,14 @@ export async function checkIn(lat?: number, lng?: number) {
     }
   }
 
+  const photoPath = await uploadCheckPhoto(supabase, user.id, photoDataUrl, "in");
+
   const { error } = await supabase.from("attendance").insert({
     staff_id: user.id,
     site_id: profile.site_id,
     check_in_lat: lat ?? null,
     check_in_lng: lng ?? null,
+    check_in_photo_path: photoPath,
   });
 
   if (error) return { error: error.message };
@@ -54,7 +86,9 @@ export async function checkIn(lat?: number, lng?: number) {
   return { success: true };
 }
 
-export async function checkOut(lat?: number, lng?: number) {
+export async function checkOut(lat?: number, lng?: number, photoDataUrl?: string) {
+  if (!photoDataUrl) return { error: th.photoRequired };
+
   const supabase = await createClient();
   const {
     data: { user },
@@ -71,12 +105,15 @@ export async function checkOut(lat?: number, lng?: number) {
 
   if (!openSession) return { error: th.notCheckedIn };
 
+  const photoPath = await uploadCheckPhoto(supabase, user.id, photoDataUrl, "out");
+
   const { error } = await supabase
     .from("attendance")
     .update({
       check_out_at: new Date().toISOString(),
       check_out_lat: lat ?? null,
       check_out_lng: lng ?? null,
+      check_out_photo_path: photoPath,
     })
     .eq("id", openSession.id);
 

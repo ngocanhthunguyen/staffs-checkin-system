@@ -32,6 +32,8 @@ export interface Attendance {
   check_in_lng: number | null;
   check_out_lat: number | null;
   check_out_lng: number | null;
+  check_in_photo_path: string | null;
+  check_out_photo_path: string | null;
   notes: string | null;
   created_at: string;
   profiles?: Profile;
