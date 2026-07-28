@@ -1,0 +1,60 @@
+export type UserRole = "staff" | "manager" | "admin";
+export type CorrectionStatus = "pending" | "approved" | "rejected";
+
+export interface Site {
+  id: string;
+  name: string;
+  latitude: number | null;
+  longitude: number | null;
+  geofence_radius_m: number;
+  created_at: string;
+}
+
+export interface Profile {
+  id: string;
+  full_name: string;
+  email: string;
+  role: UserRole;
+  department: string | null;
+  site_id: string | null;
+  is_active: boolean;
+  created_at: string;
+  updated_at: string;
+}
+
+export interface Attendance {
+  id: string;
+  staff_id: string;
+  site_id: string | null;
+  check_in_at: string;
+  check_out_at: string | null;
+  check_in_lat: number | null;
+  check_in_lng: number | null;
+  check_out_lat: number | null;
+  check_out_lng: number | null;
+  notes: string | null;
+  created_at: string;
+  profiles?: Profile;
+}
+
+export interface CorrectionRequest {
+  id: string;
+  attendance_id: string;
+  requested_by: string;
+  reason: string;
+  requested_check_in: string | null;
+  requested_check_out: string | null;
+  status: CorrectionStatus;
+  reviewed_by: string | null;
+  reviewed_at: string | null;
+  review_notes: string | null;
+  created_at: string;
+  attendance?: Attendance;
+  profiles?: Profile;
+}
+
+export interface TodayStatus {
+  isCheckedIn: boolean;
+  attendance: Attendance | null;
+  hoursToday: number;
+}

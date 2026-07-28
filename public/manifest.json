@@ -1,0 +1,25 @@
+{
+  "name": "Canaaustralasia - ลงเวลา / Check-In",
+  "short_name": "Canaaustralasia",
+  "description": "ระบบลงเวลาเข้า-ออกงาน / Staff attendance check-in and check-out",
+  "start_url": "/",
+  "display": "standalone",
+  "background_color": "#f8fafc",
+  "theme_color": "#2563eb",
+  "orientation": "portrait",
+  "lang": "th",
+  "icons": [
+    {
+      "src": "/icons/icon.svg",
+      "sizes": "any",
+      "type": "image/svg+xml",
+      "purpose": "any"
+    },
+    {
+      "src": "/icons/icon.svg",
+      "sizes": "any",
+      "type": "image/svg+xml",
+      "purpose": "maskable"
+    }
+  ]
+}
