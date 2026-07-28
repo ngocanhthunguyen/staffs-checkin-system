@@ -4,7 +4,7 @@ import { useState, useTransition } from "react";
 import { MapPin, Loader2 } from "lucide-react";
 import { checkIn, checkOut } from "@/app/actions/attendance";
 import { th } from "@/lib/i18n";
-import { formatDuration, formatTime, getCurrentPosition, getHoursBetween } from "@/lib/utils";
+import { formatDuration, formatTime, formatTodayHeader, getCurrentPosition, getHoursBetween } from "@/lib/utils";
 import type { Attendance, Site } from "@/types/database";
 
 export function CheckInPanel({
@@ -105,13 +105,8 @@ export function CheckInPanel({
         )}
       </button>
 
-      <p className="text-center text-xs text-slate-500">
-        {new Date().toLocaleDateString("th-TH", {
-          weekday: "long",
-          year: "numeric",
-          month: "long",
-          day: "numeric",
-        })}
+      <p className="text-center text-xs leading-relaxed text-slate-600">
+        {formatTodayHeader()}
       </p>
     </div>
   );

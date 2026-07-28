@@ -24,9 +24,11 @@ function endOfDay(d: Date): Date {
 }
 
 function formatPeriodLabel(start: Date, end: Date): string {
-  const opts: Intl.DateTimeFormatOptions = { day: "numeric", month: "short", year: "numeric" };
-  const th = (d: Date) => d.toLocaleDateString("th-TH", opts);
-  return `${th(start)} – ${th(end)}`;
+  const en = (d: Date) =>
+    d.toLocaleDateString("en-AU", { day: "numeric", month: "short", year: "numeric" });
+  const thai = (d: Date) =>
+    d.toLocaleDateString("th-TH", { day: "numeric", month: "long", year: "numeric" });
+  return `${en(start)} – ${en(end)} / ${thai(start)} – ${thai(end)}`;
 }
 
 export function getMonthlyPeriod(year: number, month: number): PayPeriod {
@@ -36,7 +38,9 @@ export function getMonthlyPeriod(year: number, month: number): PayPeriod {
     type: "monthly",
     start,
     end,
-    label: start.toLocaleDateString("th-TH", { month: "long", year: "numeric" }),
+    label: start.toLocaleDateString("en-AU", { month: "long", year: "numeric" }) +
+      " / " +
+      start.toLocaleDateString("th-TH", { month: "long", year: "numeric" }),
     key: `${year}-${String(month).padStart(2, "0")}`,
   };
 }

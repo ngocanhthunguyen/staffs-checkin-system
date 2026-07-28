@@ -1,7 +1,6 @@
 import { redirect } from "next/navigation";
 import { createClient } from "@/lib/supabase/server";
 import { AppShell } from "@/components/app-shell";
-import { CorrectionForm } from "@/components/correction-form";
 import { CorrectionReview } from "@/components/correction-review";
 import { statusLabel, th } from "@/lib/i18n";
 import type { CorrectionRequest, Profile } from "@/types/database";
@@ -22,25 +21,14 @@ export default async function CorrectionsPage() {
 
   if (!profile) redirect("/login");
 
-  const isManager = ["manager", "admin"].includes(profile.role);
+  if (!["manager", "admin"].includes(profile.role)) {
+    redirect("/");
+  }
 
-  const { data: myRecords } = await supabase
-    .from("attendance")
-    .select("*")
-    .eq("staff_id", user.id)
-    .order("check_in_at", { ascending: false })
-    .limit(14);
-
-  let requestsQuery = supabase
+  const { data: requests } = await supabase
     .from("correction_requests")
     .select("*, attendance(*), profiles!correction_requests_requested_by_fkey(full_name)")
     .order("created_at", { ascending: false });
-
-  if (!isManager) {
-    requestsQuery = requestsQuery.eq("requested_by", user.id);
-  }
-
-  const { data: requests } = await requestsQuery;
 
   const pendingCount = (requests ?? []).filter((r) => r.status === "pending").length;
 
@@ -49,16 +37,12 @@ export default async function CorrectionsPage() {
       <div className="space-y-6">
         <div>
           <h1 className="text-xl font-bold">{th.correctionsTitle}</h1>
-          <p className="text-sm text-slate-500">
-            {isManager ? th.pendingReview(pendingCount) : th.requestFix}
-          </p>
+          <p className="text-sm text-slate-500">{th.pendingReview(pendingCount)}</p>
         </div>
-
-        {!isManager && <CorrectionForm records={myRecords ?? []} />}
 
         <section>
           <h2 className="mb-3 text-sm font-semibold uppercase tracking-wide text-slate-500">
-            {isManager ? th.allRequests : th.myRequests}
+            {th.allRequests}
           </h2>
           <div className="space-y-3">
             {(requests ?? []).length === 0 ? (
@@ -67,7 +51,7 @@ export default async function CorrectionsPage() {
               </p>
             ) : (
               (requests ?? []).map((req) =>
-                isManager && req.status === "pending" ? (
+                req.status === "pending" ? (
                   <CorrectionReview key={req.id} request={req as CorrectionRequest} />
                 ) : (
                   <div
@@ -76,9 +60,7 @@ export default async function CorrectionsPage() {
                   >
                     <div className="flex items-center justify-between">
                       <p className="text-sm font-medium">
-                        {isManager
-                          ? (req.profiles as { full_name: string })?.full_name
-                          : th.yourRequest}
+                        {(req.profiles as { full_name: string })?.full_name}
                       </p>
                       <StatusBadge status={req.status} />
                     </div>

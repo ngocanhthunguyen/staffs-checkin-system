@@ -14,12 +14,6 @@ import { signOut } from "@/app/actions/attendance";
 import { COMPANY_NAME, splitBi, th } from "@/lib/i18n";
 import type { Profile } from "@/types/database";
 
-const staffNav = [
-  { href: "/", label: th.checkIn, icon: Clock },
-  { href: "/history", label: th.history, icon: FileText },
-  { href: "/corrections", label: th.corrections, icon: AlertCircle },
-];
-
 const managerNav = [
   { href: "/", label: th.checkIn, icon: Clock },
   { href: "/dashboard", label: th.dashboard, icon: LayoutDashboard },
@@ -37,7 +31,7 @@ export function AppShell({
 }) {
   const pathname = usePathname();
   const isManager = profile.role === "manager" || profile.role === "admin";
-  const nav = isManager ? managerNav : staffNav;
+  const nav = isManager ? managerNav : [];
 
   return (
     <div className="flex min-h-dvh flex-col">
@@ -61,33 +55,39 @@ export function AppShell({
         </div>
       </header>
 
-      <main className="mx-auto w-full max-w-lg flex-1 px-4 py-6 safe-bottom">{children}</main>
+      <main
+        className={`mx-auto w-full max-w-lg flex-1 px-4 py-6 ${nav.length > 0 ? "safe-bottom" : "pb-6"}`}
+      >
+        {children}
+      </main>
 
-      <nav className="sticky bottom-0 border-t border-slate-200 bg-white safe-bottom">
-        <div className="mx-auto flex max-w-lg justify-around px-2 py-2">
-          {nav.map(({ href, label, icon: Icon }) => {
-            const active = pathname === href;
-            const { th: thLabel, en: enLabel } = splitBi(label);
-            return (
-              <Link
-                key={href}
-                href={href}
-                className={`flex flex-col items-center gap-0.5 rounded-lg px-2 py-2 text-center transition-colors ${
-                  active
-                    ? "text-blue-600"
-                    : "text-slate-500 hover:text-slate-700"
-                }`}
-              >
-                <Icon className={`h-5 w-5 ${active ? "text-blue-600" : ""}`} />
-                <span className="text-[10px] font-medium leading-tight">{thLabel}</span>
-                {enLabel && (
-                  <span className="text-[9px] leading-tight opacity-70">{enLabel}</span>
-                )}
-              </Link>
-            );
-          })}
-        </div>
-      </nav>
+      {nav.length > 0 && (
+        <nav className="sticky bottom-0 border-t border-slate-200 bg-white safe-bottom">
+          <div className="mx-auto flex max-w-lg justify-around px-2 py-2">
+            {nav.map(({ href, label, icon: Icon }) => {
+              const active = pathname === href;
+              const { th: thLabel, en: enLabel } = splitBi(label);
+              return (
+                <Link
+                  key={href}
+                  href={href}
+                  className={`flex flex-col items-center gap-0.5 rounded-lg px-2 py-2 text-center transition-colors ${
+                    active
+                      ? "text-blue-600"
+                      : "text-slate-500 hover:text-slate-700"
+                  }`}
+                >
+                  <Icon className={`h-5 w-5 ${active ? "text-blue-600" : ""}`} />
+                  <span className="text-[10px] font-medium leading-tight">{thLabel}</span>
+                  {enLabel && (
+                    <span className="text-[9px] leading-tight opacity-70">{enLabel}</span>
+                  )}
+                </Link>
+              );
+            })}
+          </div>
+        </nav>
+      )}
     </div>
   );
 }

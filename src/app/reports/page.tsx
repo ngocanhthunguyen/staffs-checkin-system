@@ -168,11 +168,13 @@ export default async function ReportsPage({
                       : "border-amber-200 bg-amber-50"
                   }`}
                 >
-                  <div className="flex justify-between">
-                    <p className="font-medium">{record.profiles?.full_name}</p>
-                    <p className="text-slate-500">{formatDate(record.check_in_at)}</p>
-                  </div>
-                  <p className="text-xs text-slate-500">
+                <div className="flex justify-between gap-2">
+                  <p className="font-medium">{record.profiles?.full_name}</p>
+                </div>
+                <p className="mt-1 text-sm font-medium text-slate-800">
+                  {formatDate(record.check_in_at)}
+                </p>
+                <p className="text-xs text-slate-500">
                     {formatTime(record.check_in_at)} →{" "}
                     {record.check_out_at ? formatTime(record.check_out_at) : th.stillIn} ·{" "}
                     {complete ? `${hours.toFixed(1)} ${th.hours}` : th.incompleteShifts}

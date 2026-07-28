@@ -39,18 +39,43 @@ export function formatDuration(ms: number): string {
 }
 
 export function formatTime(dateStr: string): string {
-  return new Date(dateStr).toLocaleTimeString("th-TH", {
-    hour: "2-digit",
-    minute: "2-digit",
-  });
+  const d = new Date(dateStr);
+  const hours = String(d.getHours()).padStart(2, "0");
+  const minutes = String(d.getMinutes()).padStart(2, "0");
+  return `${hours}:${minutes}`;
 }
 
+/** Clear bilingual date: 28 Jul 2026 / 28 กรกฎาคม 2569 */
 export function formatDate(dateStr: string): string {
-  return new Date(dateStr).toLocaleDateString("th-TH", {
-    weekday: "short",
-    month: "short",
+  const d = new Date(dateStr);
+  const en = d.toLocaleDateString("en-AU", {
     day: "numeric",
+    month: "short",
+    year: "numeric",
   });
+  const thai = d.toLocaleDateString("th-TH", {
+    day: "numeric",
+    month: "long",
+    year: "numeric",
+  });
+  return `${en} / ${thai}`;
+}
+
+/** Today header on check-in page */
+export function formatTodayHeader(date: Date = new Date()): string {
+  const en = date.toLocaleDateString("en-AU", {
+    weekday: "long",
+    day: "numeric",
+    month: "long",
+    year: "numeric",
+  });
+  const thai = date.toLocaleDateString("th-TH", {
+    weekday: "long",
+    day: "numeric",
+    month: "long",
+    year: "numeric",
+  });
+  return `${en} / ${thai}`;
 }
 
 export function getHoursBetween(checkIn: string, checkOut: string | null): number {
