@@ -1,13 +1,14 @@
 "use client";
 
 import { useEffect, useRef, useState } from "react";
-import { Camera, RotateCcw } from "lucide-react";
+import { Camera, RotateCcw, Loader2 } from "lucide-react";
 import { th } from "@/lib/i18n";
 
 type Mode = "idle" | "camera" | "preview";
 
 const MAX_DIMENSION = 480;
 const QUALITY = 0.7;
+const CAMERA_READY_TIMEOUT_MS = 6000;
 
 export function PhotoCapture({
   onCapture,
@@ -21,6 +22,8 @@ export function PhotoCapture({
   const [mode, setMode] = useState<Mode>("idle");
   const [preview, setPreview] = useState<string | null>(null);
   const [error, setError] = useState<string | null>(null);
+  const [cameraReady, setCameraReady] = useState(false);
+  const [stuck, setStuck] = useState(false);
 
   function stopStream() {
     streamRef.current?.getTracks().forEach((track) => track.stop());
@@ -29,25 +32,50 @@ export function PhotoCapture({
 
   useEffect(() => stopStream, []);
 
+  // Attach the stream once the <video> element actually exists in the DOM
+  // (safer than requestAnimationFrame, which can race on slower devices).
+  useEffect(() => {
+    if (mode !== "camera" || !videoRef.current || !streamRef.current) return;
+
+    const video = videoRef.current;
+    video.srcObject = streamRef.current;
+    video.play().catch(() => {
+      // Some browsers (notably iOS Safari) reject play() if not tied
+      // closely enough to a user gesture — usually harmless since
+      // autoPlay + playsInline still kicks in right after.
+    });
+
+    setStuck(false);
+    const stuckTimer = setTimeout(() => {
+      if (video.videoWidth === 0) setStuck(true);
+    }, CAMERA_READY_TIMEOUT_MS);
+
+    return () => clearTimeout(stuckTimer);
+  }, [mode]);
+
   async function startCamera() {
     setError(null);
-    try {
-      const stream = await navigator.mediaDevices.getUserMedia({
-        video: { facingMode: "user" },
-        audio: false,
-      });
-      streamRef.current = stream;
-      setMode("camera");
-      // Wait a tick for the <video> element to mount before attaching the stream.
-      requestAnimationFrame(() => {
-        if (videoRef.current) {
-          videoRef.current.srcObject = stream;
-        }
-      });
-    } catch {
-      setError(th.photoError);
-      setMode("idle");
+    setCameraReady(false);
+    setStuck(false);
+
+    const constraints: MediaStreamConstraints[] = [
+      { video: { facingMode: { ideal: "user" } }, audio: false },
+      { video: true, audio: false },
+    ];
+
+    for (const constraint of constraints) {
+      try {
+        const stream = await navigator.mediaDevices.getUserMedia(constraint);
+        streamRef.current = stream;
+        setMode("camera");
+        return;
+      } catch {
+        // try the next, more permissive constraint
+      }
     }
+
+    setError(th.photoError);
+    setMode("idle");
   }
 
   function capture() {
@@ -80,6 +108,12 @@ export function PhotoCapture({
     startCamera();
   }
 
+  function retryCamera() {
+    stopStream();
+    setMode("idle");
+    startCamera();
+  }
+
   return (
     <div className="space-y-2">
       {mode === "preview" && preview && (
@@ -105,13 +139,36 @@ export function PhotoCapture({
             autoPlay
             playsInline
             muted
+            onLoadedMetadata={() => setCameraReady(true)}
+            onPlaying={() => setCameraReady(true)}
             className="h-40 w-full scale-x-[-1] object-cover"
           />
+
+          {!cameraReady && !stuck && (
+            <div className="absolute inset-0 flex flex-col items-center justify-center gap-2 text-white">
+              <Loader2 className="h-5 w-5 animate-spin" />
+              <span className="text-xs">{th.startingCamera}</span>
+            </div>
+          )}
+
+          {stuck && !cameraReady && (
+            <div className="absolute inset-0 flex flex-col items-center justify-center gap-2 bg-black/70 px-4 text-center text-white">
+              <span className="text-xs">{th.cameraStuckHint}</span>
+              <button
+                type="button"
+                onClick={retryCamera}
+                className="rounded-lg bg-white px-3 py-1.5 text-xs font-semibold text-slate-900"
+              >
+                {th.retakePhoto}
+              </button>
+            </div>
+          )}
+
           <button
             type="button"
             onClick={capture}
-            disabled={disabled}
-            className="absolute bottom-2 left-1/2 flex -translate-x-1/2 items-center gap-1.5 rounded-full bg-white px-4 py-2 text-sm font-semibold text-slate-900 shadow-lg disabled:opacity-60"
+            disabled={disabled || !cameraReady}
+            className="absolute bottom-2 left-1/2 flex -translate-x-1/2 items-center gap-1.5 rounded-full bg-white px-4 py-2 text-sm font-semibold text-slate-900 shadow-lg disabled:opacity-40"
           >
             <Camera className="h-4 w-4" />
             {th.capturePhoto}

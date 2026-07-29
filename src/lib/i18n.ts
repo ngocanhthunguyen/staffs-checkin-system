@@ -52,6 +52,11 @@ export const th = {
   takePhoto: bi("ถ่ายรูปเพื่อลงเวลา", "Take a photo to check in/out"),
   capturePhoto: bi("ถ่าย", "Capture"),
   retakePhoto: bi("ถ่ายใหม่", "Retake"),
+  startingCamera: bi("กำลังเปิดกล้อง...", "Starting camera..."),
+  cameraStuckHint: bi(
+    "กล้องไม่แสดงภาพ ลองปิดแอปอื่นที่ใช้กล้องแล้วลองใหม่",
+    "Camera isn't showing a picture. Close other apps using the camera and try again."
+  ),
   photoRequired: bi(
     "กรุณาถ่ายรูปก่อนลงเวลา",
     "Please take a photo before checking in/out"
