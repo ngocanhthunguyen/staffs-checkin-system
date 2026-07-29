@@ -192,6 +192,10 @@ export const th = {
     "ไปที่ Supabase → Table Editor → profiles → เปลี่ยน role เป็น manager หรือ admin",
     "In Supabase → Table Editor → profiles → change role to manager or admin"
   ),
+  noSiteWarning: bi(
+    "ไม่ได้ผูกไซต์ — ไม่มีการตรวจสอบ GPS/Wi-Fi",
+    "No site linked — GPS/Wi-Fi checks are skipped"
+  ),
 
   // Roles
   roleStaff: bi("พนักงาน", "Staff"),

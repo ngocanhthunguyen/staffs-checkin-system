@@ -55,10 +55,12 @@ export default async function TeamPage() {
                   {member.email}
                   {member.department && ` · ${member.department}`}
                 </p>
-                {(member.sites as { name: string } | null)?.name && (
+                {(member.sites as { name: string } | null)?.name ? (
                   <p className="text-xs text-slate-400">
                     {(member.sites as { name: string }).name}
                   </p>
+                ) : (
+                  <p className="text-xs font-medium text-amber-600">{th.noSiteWarning}</p>
                 )}
               </div>
               <div className="flex flex-col items-end gap-1">

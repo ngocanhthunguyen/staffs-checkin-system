@@ -76,12 +76,16 @@ create index correction_requests_status_idx on public.correction_requests(status
 create or replace function public.handle_new_user()
 returns trigger as $$
 begin
-  insert into public.profiles (id, full_name, email, role)
+  -- New staff are auto-assigned to the first/only site so GPS and
+  -- office-network checks apply to them immediately. If you add more
+  -- sites later, reassign specific staff manually in Table Editor.
+  insert into public.profiles (id, full_name, email, role, site_id)
   values (
     new.id,
     coalesce(new.raw_user_meta_data->>'full_name', split_part(new.email, '@', 1)),
     new.email,
-    coalesce((new.raw_user_meta_data->>'role')::public.user_role, 'staff')
+    coalesce((new.raw_user_meta_data->>'role')::public.user_role, 'staff'),
+    (select id from public.sites order by created_at limit 1)
   );
   return new;
 end;
