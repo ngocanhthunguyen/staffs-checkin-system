@@ -39,14 +39,14 @@ export function LeaveForm() {
         </select>
       </div>
 
-      <div className="grid grid-cols-2 gap-3">
+      <div className="space-y-4">
         <div>
           <label className="mb-1 block text-sm font-medium text-slate-700">{th.startDate}</label>
           <input
             type="date"
             name="start_date"
             required
-            className="w-full rounded-xl border border-slate-300 px-3 py-2 text-sm"
+            className="w-full rounded-xl border border-slate-300 px-3 py-2.5 text-sm"
           />
         </div>
         <div>
@@ -59,7 +59,7 @@ export function LeaveForm() {
             min="0.5"
             step="0.5"
             required
-            className="w-full rounded-xl border border-slate-300 px-3 py-2 text-sm"
+            className="w-full rounded-xl border border-slate-300 px-3 py-2.5 text-sm"
           />
         </div>
       </div>

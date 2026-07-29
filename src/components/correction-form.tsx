@@ -48,7 +48,7 @@ export function CorrectionForm({ records }: { records: Attendance[] }) {
         </select>
       </div>
 
-      <div className="grid grid-cols-2 gap-3">
+      <div className="space-y-4">
         <div>
           <label className="mb-1 block text-sm font-medium text-slate-700">
             {th.correctCheckIn}
@@ -56,7 +56,7 @@ export function CorrectionForm({ records }: { records: Attendance[] }) {
           <input
             type="datetime-local"
             name="requested_check_in"
-            className="w-full rounded-xl border border-slate-300 px-3 py-2 text-sm"
+            className="w-full rounded-xl border border-slate-300 px-3 py-2.5 text-sm"
           />
         </div>
         <div>
@@ -66,7 +66,7 @@ export function CorrectionForm({ records }: { records: Attendance[] }) {
           <input
             type="datetime-local"
             name="requested_check_out"
-            className="w-full rounded-xl border border-slate-300 px-3 py-2 text-sm"
+            className="w-full rounded-xl border border-slate-300 px-3 py-2.5 text-sm"
           />
         </div>
       </div>
