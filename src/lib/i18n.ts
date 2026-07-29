@@ -49,6 +49,7 @@ export const th = {
   locationCheck: bi("ตรวจสอบตำแหน่งสำหรับ", "Location check for"),
   radius: bi("รัศมี", "radius"),
   takePhoto: bi("ถ่ายรูปเพื่อลงเวลา", "Take a photo to check in/out"),
+  capturePhoto: bi("ถ่าย", "Capture"),
   retakePhoto: bi("ถ่ายใหม่", "Retake"),
   photoRequired: bi(
     "กรุณาถ่ายรูปก่อนลงเวลา",
