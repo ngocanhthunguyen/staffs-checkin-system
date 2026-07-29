@@ -1,4 +1,6 @@
 import { redirect } from "next/navigation";
+import Link from "next/link";
+import { ChevronRight } from "lucide-react";
 import { createClient } from "@/lib/supabase/server";
 import { AppShell } from "@/components/app-shell";
 import { roleLabel, th } from "@/lib/i18n";
@@ -45,9 +47,10 @@ export default async function TeamPage() {
 
         <div className="space-y-2">
           {(staff ?? []).map((member) => (
-            <div
+            <Link
               key={member.id}
-              className="flex items-center justify-between rounded-xl border border-slate-200 bg-white px-4 py-3"
+              href={`/team/${member.id}`}
+              className="flex items-center justify-between rounded-xl border border-slate-200 bg-white px-4 py-3 hover:border-blue-300 hover:bg-blue-50/30"
             >
               <div>
                 <p className="font-medium">{member.full_name}</p>
@@ -63,17 +66,20 @@ export default async function TeamPage() {
                   <p className="text-xs font-medium text-amber-600">{th.noSiteWarning}</p>
                 )}
               </div>
-              <div className="flex flex-col items-end gap-1">
-                <span
-                  className={`rounded-full px-2.5 py-0.5 text-xs font-medium ${roleColors[member.role]}`}
-                >
-                  {roleLabel(member.role)}
-                </span>
-                {!member.is_active && (
-                  <span className="text-xs text-red-500">{th.inactive}</span>
-                )}
+              <div className="flex items-center gap-2">
+                <div className="flex flex-col items-end gap-1">
+                  <span
+                    className={`rounded-full px-2.5 py-0.5 text-xs font-medium ${roleColors[member.role]}`}
+                  >
+                    {roleLabel(member.role)}
+                  </span>
+                  {!member.is_active && (
+                    <span className="text-xs text-red-500">{th.inactive}</span>
+                  )}
+                </div>
+                <ChevronRight className="h-4 w-4 shrink-0 text-slate-300" />
               </div>
-            </div>
+            </Link>
           ))}
         </div>
 

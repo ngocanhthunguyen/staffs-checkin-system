@@ -220,6 +220,12 @@ export const th = {
     "Hours beyond 8/day count as overtime"
   ),
 
+  // Staff profile detail
+  staffProfile: bi("ข้อมูลพนักงาน", "Staff Profile"),
+  backToTeam: bi("กลับไปที่ทีมงาน", "Back to Team"),
+  workThisMonth: bi("การทำงานเดือนนี้", "This month's work"),
+  recentLeaveRequests: bi("คำขอลาล่าสุด", "Recent leave requests"),
+
   // Team
   teamTitle: bi("ทีมงาน", "Team"),
   members: bi("คน", "members"),
