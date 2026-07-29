@@ -2,6 +2,7 @@ export type UserRole = "staff" | "manager" | "admin";
 export type CorrectionStatus = "pending" | "approved" | "rejected";
 export type LeaveType = "sick" | "annual";
 export type LeaveStatus = "pending" | "approved" | "rejected";
+export type EmploymentType = "full_time" | "part_time";
 
 export interface Site {
   id: string;
@@ -21,6 +22,8 @@ export interface Profile {
   department: string | null;
   site_id: string | null;
   is_active: boolean;
+  employment_type: EmploymentType;
+  weekly_hours: number;
   created_at: string;
   updated_at: string;
 }

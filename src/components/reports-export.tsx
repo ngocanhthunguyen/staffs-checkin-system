@@ -1,7 +1,7 @@
 "use client";
 
 import { Download } from "lucide-react";
-import { COMPANY_NAME, th } from "@/lib/i18n";
+import { COMPANY_NAME, employmentLabel, th } from "@/lib/i18n";
 import type { Attendance } from "@/types/database";
 import type { PayPeriod, PayrollSummaryRow } from "@/lib/pay-period";
 
@@ -27,10 +27,10 @@ export function ReportsExport({
       `Total Payable Hours / ชั่วโมงจ่ายเงินรวม:,${totalHours.toFixed(2)}`,
       `Total Overtime Hours / ชั่วโมงล่วงเวลารวม:,${totalOvertime.toFixed(2)}`,
       "",
-      "พนักงาน / Staff,แผนก / Department,วันทำงาน / Days Worked,ชั่วโมงปกติ / Regular Hours,ชั่วโมง OT / Overtime Hours,ชั่วโมงจ่ายรวม / Total Payable Hours,ลืมออกงาน / Missing Check-out",
+      "พนักงาน / Staff,แผนก / Department,ประเภท / Employment,วันทำงาน / Days Worked,ชั่วโมงปกติ / Regular Hours,ชั่วโมง OT / Overtime Hours,ชั่วโมงจ่ายรวม / Total Payable Hours,ลืมออกงาน / Missing Check-out",
       ...summary.map(
         (s) =>
-          `"${s.name}","${s.department ?? ""}",${s.daysWorked},${s.regularHours.toFixed(2)},${s.overtimeHours.toFixed(2)},${s.totalHours.toFixed(2)},${s.incompleteShifts}`
+          `"${s.name}","${s.department ?? ""}","${employmentLabel(s.employmentType)}",${s.daysWorked},${s.regularHours.toFixed(2)},${s.overtimeHours.toFixed(2)},${s.totalHours.toFixed(2)},${s.incompleteShifts}`
       ),
       "",
       "วันที่ / Date,พนักงาน / Staff,เข้างาน / Check In,ออกงาน / Check Out,ชั่วโมง / Hours,สถานะ / Status",

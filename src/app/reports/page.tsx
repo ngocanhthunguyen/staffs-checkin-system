@@ -3,7 +3,7 @@ import { createClient } from "@/lib/supabase/server";
 import { AppShell } from "@/components/app-shell";
 import { PayPeriodFilter } from "@/components/pay-period-filter";
 import { formatDate, formatTime, getHoursBetween } from "@/lib/utils";
-import { th } from "@/lib/i18n";
+import { employmentLabel, th } from "@/lib/i18n";
 import {
   buildPayrollSummary,
   getFortnightContaining,
@@ -55,7 +55,7 @@ export default async function ReportsPage({
 
   const { data: records } = await supabase
     .from("attendance")
-    .select("*, profiles(full_name, department)")
+    .select("*, profiles(full_name, department, employment_type)")
     .gte("check_in_at", period.start.toISOString())
     .lte("check_in_at", period.end.toISOString())
     .order("check_in_at", { ascending: true });
@@ -136,9 +136,10 @@ export default async function ReportsPage({
                 >
                   <div>
                     <p className="font-medium">{data.name}</p>
-                    {data.department && (
-                      <p className="text-xs text-slate-500">{data.department}</p>
-                    )}
+                    <p className="text-xs text-slate-500">
+                      {data.department && `${data.department} · `}
+                      {employmentLabel(data.employmentType)}
+                    </p>
                     {data.incompleteShifts > 0 && (
                       <p className="text-xs text-amber-600">
                         {data.incompleteShifts} {th.incompleteShifts}

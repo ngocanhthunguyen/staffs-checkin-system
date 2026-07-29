@@ -22,13 +22,19 @@ export async function requestLeave(formData: FormData) {
   if (!leaveType || !startDate) return { error: th.attendanceReasonRequired };
   if (!Number.isFinite(days) || days <= 0) return { error: th.invalidLeaveDays };
 
+  const { data: requester } = await supabase
+    .from("profiles")
+    .select("weekly_hours")
+    .eq("id", user.id)
+    .single();
+
   const year = new Date(startDate).getFullYear();
   const { data: existing } = await supabase
     .from("leave_requests")
     .select("leave_type, start_date, days, status")
     .eq("staff_id", user.id);
 
-  const balances = calculateLeaveBalances(existing ?? [], year);
+  const balances = calculateLeaveBalances(existing ?? [], requester?.weekly_hours, year);
   const balance = balances.find((b) => b.type === leaveType);
 
   if (balance && days > balance.remaining) {

@@ -119,6 +119,7 @@ export interface PayrollSummaryRow {
   id: string;
   name: string;
   department: string | null;
+  employmentType: "full_time" | "part_time" | null;
   daysWorked: number;
   totalHours: number;
   regularHours: number;
@@ -131,7 +132,11 @@ export interface AttendanceForPayroll {
   staff_id: string;
   check_in_at: string;
   check_out_at: string | null;
-  profiles?: { full_name: string; department: string | null };
+  profiles?: {
+    full_name: string;
+    department: string | null;
+    employment_type?: "full_time" | "part_time" | null;
+  };
 }
 
 export function buildPayrollSummary(
@@ -143,11 +148,13 @@ export function buildPayrollSummary(
   for (const record of records) {
     const name = record.profiles?.full_name ?? unknownLabel;
     const department = record.profiles?.department ?? null;
+    const employmentType = record.profiles?.employment_type ?? null;
     const row =
       byStaff.get(record.staff_id) ?? {
         id: record.staff_id,
         name,
         department,
+        employmentType,
         daysWorked: 0,
         totalHours: 0,
         regularHours: 0,

@@ -3,9 +3,10 @@ import Link from "next/link";
 import { ChevronLeft } from "lucide-react";
 import { createClient } from "@/lib/supabase/server";
 import { AppShell } from "@/components/app-shell";
+import { StaffEmploymentForm } from "@/components/staff-employment-form";
 import { calculateLeaveBalances } from "@/lib/leave";
 import { buildPayrollSummary, getMonthlyPeriod } from "@/lib/pay-period";
-import { roleLabel, statusLabel, th } from "@/lib/i18n";
+import { employmentLabel, roleLabel, statusLabel, th } from "@/lib/i18n";
 import type { Profile } from "@/types/database";
 
 export default async function StaffDetailPage({
@@ -57,7 +58,7 @@ export default async function StaffDetailPage({
     .eq("staff_id", id)
     .order("created_at", { ascending: false });
 
-  const balances = calculateLeaveBalances(leaveRequests ?? []);
+  const balances = calculateLeaveBalances(leaveRequests ?? [], staffMember.weekly_hours);
 
   const roleColors: Record<string, string> = {
     staff: "bg-slate-100 text-slate-700",
@@ -88,6 +89,7 @@ export default async function StaffDetailPage({
           <p className="text-sm text-slate-500">
             {staffMember.email}
             {staffMember.department && ` · ${staffMember.department}`}
+            {` · ${employmentLabel(staffMember.employment_type)}`}
           </p>
           {(staffMember.sites as { name: string } | null)?.name && (
             <p className="text-xs text-slate-400">
@@ -98,6 +100,12 @@ export default async function StaffDetailPage({
             <p className="mt-1 text-xs font-medium text-red-500">{th.inactive}</p>
           )}
         </div>
+
+        <StaffEmploymentForm
+          staffId={staffMember.id}
+          employmentType={staffMember.employment_type}
+          weeklyHours={staffMember.weekly_hours}
+        />
 
         <section>
           <h2 className="mb-3 text-sm font-semibold uppercase tracking-wide text-slate-500">

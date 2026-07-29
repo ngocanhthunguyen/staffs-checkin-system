@@ -20,6 +20,7 @@ create table public.sites (
 
 -- User profiles (extends Supabase auth.users)
 create type public.user_role as enum ('staff', 'manager', 'admin');
+create type public.employment_type as enum ('full_time', 'part_time');
 
 create table public.profiles (
   id uuid primary key references auth.users(id) on delete cascade,
@@ -29,6 +30,11 @@ create table public.profiles (
   department text,
   site_id uuid references public.sites(id),
   is_active boolean default true,
+  employment_type public.employment_type not null default 'full_time',
+  -- Contracted hours/week. Full-time = 48 (standard). Part-time staff should
+  -- have this set to their actual hours so sick/annual leave is prorated
+  -- against the full-time entitlement (30 sick / 7 annual days).
+  weekly_hours numeric(5, 1) not null default 48,
   created_at timestamptz default now(),
   updated_at timestamptz default now()
 );

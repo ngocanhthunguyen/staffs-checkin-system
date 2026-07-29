@@ -31,7 +31,7 @@ export default async function LeavePage() {
     .eq("staff_id", user.id)
     .order("created_at", { ascending: false });
 
-  const myBalances = calculateLeaveBalances(myRequests ?? []);
+  const myBalances = calculateLeaveBalances(myRequests ?? [], profile.weekly_hours);
 
   let allRequests: LeaveRequest[] = [];
   let teamBalances: { name: string; balances: ReturnType<typeof calculateLeaveBalances> }[] = [];
@@ -45,13 +45,16 @@ export default async function LeavePage() {
 
     const { data: staffList } = await supabase
       .from("profiles")
-      .select("id, full_name")
+      .select("id, full_name, weekly_hours")
       .eq("is_active", true)
       .order("full_name");
 
     teamBalances = (staffList ?? []).map((staff) => {
       const staffRequests = allRequests.filter((r) => r.staff_id === staff.id);
-      return { name: staff.full_name, balances: calculateLeaveBalances(staffRequests) };
+      return {
+        name: staff.full_name,
+        balances: calculateLeaveBalances(staffRequests, staff.weekly_hours),
+      };
     });
   }
 

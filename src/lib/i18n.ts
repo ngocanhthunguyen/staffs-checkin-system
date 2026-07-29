@@ -231,6 +231,22 @@ export const th = {
   workThisMonth: bi("การทำงานเดือนนี้", "This month's work"),
   recentLeaveRequests: bi("คำขอลาล่าสุด", "Recent leave requests"),
 
+  // Employment type
+  employmentType: bi("ประเภทการจ้างงาน", "Employment type"),
+  fullTime: bi("เต็มเวลา", "Full-time"),
+  partTime: bi("พาร์ทไทม์", "Part-time"),
+  weeklyHours: bi("ชั่วโมงทำงาน/สัปดาห์", "Hours per week"),
+  weeklyHoursHint: bi(
+    "ใช้คำนวณสัดส่วนวันลาสำหรับพนักงานพาร์ทไทม์ เทียบกับเต็มเวลา 48 ชม./สัปดาห์",
+    "Used to prorate sick/annual leave for part-time staff, compared to a full-time 48 hrs/week"
+  ),
+  saveChanges: bi("บันทึกการเปลี่ยนแปลง", "Save changes"),
+  employmentUpdated: bi("อัปเดตข้อมูลการจ้างงานแล้ว", "Employment details updated"),
+  invalidWeeklyHours: bi(
+    "กรุณาระบุชั่วโมงทำงานต่อสัปดาห์ให้ถูกต้อง (1-80)",
+    "Please enter valid weekly hours (1-80)"
+  ),
+
   // Team
   teamTitle: bi("ทีมงาน", "Team"),
   members: bi("คน", "members"),
@@ -260,6 +276,10 @@ export function roleLabel(role: string): string {
     default:
       return th.roleStaff;
   }
+}
+
+export function employmentLabel(type: string | null | undefined): string {
+  return type === "part_time" ? th.partTime : th.fullTime;
 }
 
 export function statusLabel(status: string): string {

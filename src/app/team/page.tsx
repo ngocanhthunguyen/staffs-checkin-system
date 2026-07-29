@@ -3,7 +3,7 @@ import Link from "next/link";
 import { ChevronRight } from "lucide-react";
 import { createClient } from "@/lib/supabase/server";
 import { AppShell } from "@/components/app-shell";
-import { roleLabel, th } from "@/lib/i18n";
+import { employmentLabel, roleLabel, th } from "@/lib/i18n";
 import type { Profile } from "@/types/database";
 
 export default async function TeamPage() {
@@ -57,6 +57,7 @@ export default async function TeamPage() {
                 <p className="text-xs text-slate-500">
                   {member.email}
                   {member.department && ` · ${member.department}`}
+                  {` · ${employmentLabel(member.employment_type)}`}
                 </p>
                 {(member.sites as { name: string } | null)?.name ? (
                   <p className="text-xs text-slate-400">
