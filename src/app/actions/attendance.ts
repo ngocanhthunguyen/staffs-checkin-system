@@ -3,7 +3,7 @@
 import { revalidatePath } from "next/cache";
 import { createClient } from "@/lib/supabase/server";
 import { th } from "@/lib/i18n";
-import { isWithinGeofence } from "@/lib/utils";
+import { isWithinGeofence, distanceInMeters } from "@/lib/utils";
 import type { Site } from "@/types/database";
 
 type SupabaseServerClient = Awaited<ReturnType<typeof createClient>>;
@@ -63,8 +63,12 @@ export async function checkIn(lat?: number, lng?: number, photoDataUrl?: string)
   const site = profile.sites as Site | null;
   if (site && lat != null && lng != null) {
     if (!isWithinGeofence(lat, lng, site)) {
+      const distance =
+        site.latitude != null && site.longitude != null
+          ? Math.round(distanceInMeters(lat, lng, site.latitude, site.longitude))
+          : null;
       return {
-        error: th.geofenceError(site.geofence_radius_m, site.name),
+        error: th.geofenceError(site.geofence_radius_m, site.name, distance),
       };
     }
   }

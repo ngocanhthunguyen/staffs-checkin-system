@@ -79,10 +79,14 @@ export const th = {
   accountInactive: bi("บัญชีของคุณถูกระงับ", "Your account is inactive"),
   alreadyCheckedIn: bi("คุณลงเวลาเข้างานแล้ว", "You are already checked in"),
   notCheckedIn: bi("คุณยังไม่ได้ลงเวลาเข้างาน", "You are not checked in"),
-  geofenceError: (radius: number, site: string) =>
+  geofenceError: (radius: number, site: string, distance?: number | null) =>
     bi(
-      `ต้องอยู่ในรัศมี ${radius} เมตรจาก ${site} จึงจะลงเวลาเข้างานได้`,
-      `You must be within ${radius}m of ${site} to check in`
+      `ต้องอยู่ในรัศมี ${radius} เมตรจาก ${site} จึงจะลงเวลาเข้างานได้${
+        distance != null ? ` (ตอนนี้คุณอยู่ห่างประมาณ ${distance} เมตร)` : ""
+      }`,
+      `You must be within ${radius}m of ${site} to check in${
+        distance != null ? ` (you're about ${distance}m away)` : ""
+      }`
     ),
   attendanceReasonRequired: bi(
     "กรุณาเลือกวันและระบุเหตุผล",
