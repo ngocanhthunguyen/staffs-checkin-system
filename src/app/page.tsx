@@ -20,6 +20,8 @@ export default async function HomePage() {
 
   if (!profile) redirect("/login");
 
+  if (profile.role === "admin") redirect("/dashboard");
+
   let site: Site | null = null;
   if (profile.site_id) {
     const { data } = await supabase.from("sites").select("*").eq("id", profile.site_id).single();

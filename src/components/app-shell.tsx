@@ -22,6 +22,10 @@ const managerNav = [
   { href: "/corrections", label: th.corrections, icon: AlertCircle },
 ];
 
+// Admins oversee the system but don't clock in/out themselves, so there's
+// no Check In tab and "/" isn't in their nav (it redirects to /dashboard).
+const adminNav = managerNav.filter((item) => item.href !== "/");
+
 export function AppShell({
   profile,
   children,
@@ -30,8 +34,8 @@ export function AppShell({
   children: React.ReactNode;
 }) {
   const pathname = usePathname();
-  const isManager = profile.role === "manager" || profile.role === "admin";
-  const nav = isManager ? managerNav : [];
+  const nav =
+    profile.role === "admin" ? adminNav : profile.role === "manager" ? managerNav : [];
 
   return (
     <div className="flex min-h-dvh flex-col">
