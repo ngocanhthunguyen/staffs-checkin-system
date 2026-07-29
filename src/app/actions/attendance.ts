@@ -1,12 +1,21 @@
 "use server";
 
+import { headers } from "next/headers";
 import { revalidatePath } from "next/cache";
 import { createClient } from "@/lib/supabase/server";
 import { th } from "@/lib/i18n";
-import { isWithinGeofence } from "@/lib/utils";
+import { isWithinGeofence, isAllowedIp } from "@/lib/utils";
 import type { Site } from "@/types/database";
 
 type SupabaseServerClient = Awaited<ReturnType<typeof createClient>>;
+
+/** Best-effort public IP of the current request (works on Vercel). */
+async function getClientIp(): Promise<string | null> {
+  const headerList = await headers();
+  const forwardedFor = headerList.get("x-forwarded-for");
+  if (forwardedFor) return forwardedFor.split(",")[0]?.trim() ?? null;
+  return headerList.get("x-real-ip");
+}
 
 async function uploadCheckPhoto(
   supabase: SupabaseServerClient,
@@ -69,6 +78,13 @@ export async function checkIn(lat?: number, lng?: number, photoDataUrl?: string)
     }
   }
 
+  if (site) {
+    const clientIp = await getClientIp();
+    if (!isAllowedIp(clientIp, site)) {
+      return { error: th.networkError };
+    }
+  }
+
   const photoPath = await uploadCheckPhoto(supabase, user.id, photoDataUrl, "in");
 
   const { error } = await supabase.from("attendance").insert({
@@ -104,6 +120,20 @@ export async function checkOut(lat?: number, lng?: number, photoDataUrl?: string
     .maybeSingle();
 
   if (!openSession) return { error: th.notCheckedIn };
+
+  const { data: profile } = await supabase
+    .from("profiles")
+    .select("*, sites(*)")
+    .eq("id", user.id)
+    .single();
+
+  const site = (profile?.sites as Site | null) ?? null;
+  if (site) {
+    const clientIp = await getClientIp();
+    if (!isAllowedIp(clientIp, site)) {
+      return { error: th.networkError };
+    }
+  }
 
   const photoPath = await uploadCheckPhoto(supabase, user.id, photoDataUrl, "out");
 

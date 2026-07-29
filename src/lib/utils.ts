@@ -30,6 +30,16 @@ export function isWithinGeofence(
   return distance <= site.geofence_radius_m;
 }
 
+/** Checks the request's public IP against a site's office-network allowlist. */
+export function isAllowedIp(
+  clientIp: string | null,
+  site: Pick<Site, "allowed_ips">
+): boolean {
+  if (!site.allowed_ips || site.allowed_ips.length === 0) return true;
+  if (!clientIp) return false;
+  return site.allowed_ips.map((ip) => ip.trim()).includes(clientIp.trim());
+}
+
 export function formatDuration(ms: number): string {
   const totalMinutes = Math.floor(ms / 60000);
   const hours = Math.floor(totalMinutes / 60);

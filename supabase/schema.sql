@@ -11,6 +11,10 @@ create table public.sites (
   latitude double precision,
   longitude double precision,
   geofence_radius_m integer default 150,
+  -- Office's static public IP address(es). If set, check-in/out is only
+  -- allowed when the request comes from one of these IPs (in addition to
+  -- the GPS geofence check). Leave empty/null to skip this check.
+  allowed_ips text[],
   created_at timestamptz default now()
 );
 

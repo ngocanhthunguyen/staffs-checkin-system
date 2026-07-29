@@ -7,6 +7,7 @@ export interface Site {
   latitude: number | null;
   longitude: number | null;
   geofence_radius_m: number;
+  allowed_ips: string[] | null;
   created_at: string;
 }
 
