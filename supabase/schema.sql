@@ -67,10 +67,30 @@ create table public.correction_requests (
   created_at timestamptz default now()
 );
 
+-- Leave requests (sick / annual leave)
+create type public.leave_type as enum ('sick', 'annual');
+create type public.leave_status as enum ('pending', 'approved', 'rejected');
+
+create table public.leave_requests (
+  id uuid primary key default uuid_generate_v4(),
+  staff_id uuid not null references public.profiles(id) on delete cascade,
+  leave_type public.leave_type not null,
+  start_date date not null,
+  days numeric(4, 1) not null check (days > 0),
+  reason text,
+  status public.leave_status not null default 'pending',
+  reviewed_by uuid references public.profiles(id),
+  reviewed_at timestamptz,
+  review_notes text,
+  created_at timestamptz default now()
+);
+
 -- Indexes
 create index attendance_staff_id_idx on public.attendance(staff_id);
 create index attendance_check_in_at_idx on public.attendance(check_in_at);
 create index correction_requests_status_idx on public.correction_requests(status);
+create index leave_requests_staff_id_idx on public.leave_requests(staff_id);
+create index leave_requests_status_idx on public.leave_requests(status);
 
 -- Auto-create profile on signup
 create or replace function public.handle_new_user()
@@ -113,6 +133,7 @@ alter table public.sites enable row level security;
 alter table public.profiles enable row level security;
 alter table public.attendance enable row level security;
 alter table public.correction_requests enable row level security;
+alter table public.leave_requests enable row level security;
 
 -- Helper: check if user is manager or admin
 create or replace function public.is_manager_or_admin()
@@ -175,6 +196,19 @@ create policy "Staff can create correction requests"
 
 create policy "Managers can update correction requests"
   on public.correction_requests for update to authenticated
+  using (public.is_manager_or_admin());
+
+-- Leave requests policies
+create policy "Staff can view own leave requests"
+  on public.leave_requests for select to authenticated
+  using (staff_id = auth.uid() or public.is_manager_or_admin());
+
+create policy "Staff can create own leave requests"
+  on public.leave_requests for insert to authenticated
+  with check (staff_id = auth.uid());
+
+create policy "Managers can update leave requests"
+  on public.leave_requests for update to authenticated
   using (public.is_manager_or_admin());
 
 -- Seed default office site (Bangkok example — update coordinates for your office)

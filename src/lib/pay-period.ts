@@ -112,12 +112,17 @@ export function resolvePayPeriod(
   return getMonthlyPeriod(year, month);
 }
 
+/** Hours beyond this threshold per shift count as overtime. */
+const OVERTIME_THRESHOLD_HOURS = 8;
+
 export interface PayrollSummaryRow {
   id: string;
   name: string;
   department: string | null;
   daysWorked: number;
   totalHours: number;
+  regularHours: number;
+  overtimeHours: number;
   incompleteShifts: number;
 }
 
@@ -145,6 +150,8 @@ export function buildPayrollSummary(
         department,
         daysWorked: 0,
         totalHours: 0,
+        regularHours: 0,
+        overtimeHours: 0,
         incompleteShifts: 0,
       };
 
@@ -154,11 +161,15 @@ export function buildPayrollSummary(
       continue;
     }
 
-    const hours =
+    const hours = Math.max(
+      0,
       (new Date(record.check_out_at).getTime() - new Date(record.check_in_at).getTime()) /
-      3600000;
+        3600000
+    );
     row.daysWorked += 1;
-    row.totalHours += Math.max(0, hours);
+    row.totalHours += hours;
+    row.regularHours += Math.min(hours, OVERTIME_THRESHOLD_HOURS);
+    row.overtimeHours += Math.max(0, hours - OVERTIME_THRESHOLD_HOURS);
     byStaff.set(record.staff_id, row);
   }
 

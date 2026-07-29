@@ -39,6 +39,7 @@ export const th = {
   dashboard: bi("แดชบอร์ด", "Dashboard"),
   reports: bi("เงินเดือน", "Payroll"),
   team: bi("ทีมงาน", "Team"),
+  leave: bi("ลาหยุด", "Leave"),
 
   // Check-in panel
   checkedIn: bi("คุณลงเวลาเข้างานแล้ว", "You're checked in"),
@@ -179,6 +180,45 @@ export const th = {
   requestedCheckOut: bi("เวลาออกงานที่ขอแก้", "Requested check-out"),
   approve: bi("อนุมัติ", "Approve"),
   reject: bi("ปฏิเสธ", "Reject"),
+
+  // Leave
+  leaveTitle: bi("ลาหยุด", "Leave"),
+  leaveBalance: bi("วันลาคงเหลือ", "Leave balance"),
+  sickLeave: bi("ลาป่วย", "Sick leave"),
+  annualLeave: bi("ลาพักร้อน", "Annual leave"),
+  daysUsedOf: (used: number, total: number) =>
+    bi(`ใช้ไป ${used} จาก ${total} วัน`, `${used} of ${total} days used`),
+  daysRemaining: bi("วันคงเหลือ", "days remaining"),
+  requestLeaveTitle: bi("ขอวันลา", "Request leave"),
+  leaveType: bi("ประเภทการลา", "Leave type"),
+  startDate: bi("วันที่เริ่มลา", "Start date"),
+  numberOfDays: bi("จำนวนวัน", "Number of days"),
+  leaveReason: bi("เหตุผล (ถ้ามี)", "Reason (optional)"),
+  leaveReasonPlaceholder: bi("เช่น ไม่สบาย, ธุระส่วนตัว", "e.g. Feeling unwell, personal matter"),
+  submitLeaveRequest: bi("ส่งคำขอลา", "Submit leave request"),
+  leaveRequestSubmitted: bi(
+    "ส่งคำขอลาแล้ว! ผู้จัดการจะตรวจสอบให้",
+    "Leave request submitted! Your manager will review it."
+  ),
+  myLeaveRequests: bi("คำขอลาของฉัน", "My leave requests"),
+  allLeaveRequests: bi("คำขอลาทั้งหมด", "All leave requests"),
+  noLeaveRequests: bi("ไม่มีคำขอลา", "No leave requests"),
+  pendingLeaveReview: (n: number) =>
+    bi(`รออนุมัติ ${n} คำขอลา`, `${n} leave requests pending review`),
+  leaveDaysLabel: (days: number) => bi(`${days} วัน`, `${days} day${days === 1 ? "" : "s"}`),
+  notEnoughLeaveBalance: bi(
+    "วันลาคงเหลือไม่พอ",
+    "Not enough remaining leave balance for this request"
+  ),
+  invalidLeaveDays: bi("จำนวนวันไม่ถูกต้อง", "Please enter a valid number of days"),
+
+  // Reports / overtime
+  regularHours: bi("ชั่วโมงปกติ", "Regular hours"),
+  overtimeHours: bi("ชั่วโมงล่วงเวลา (OT)", "Overtime (OT) hours"),
+  overtimeHint: bi(
+    "ชั่วโมงเกิน 8 ชม./วัน นับเป็นล่วงเวลา",
+    "Hours beyond 8/day count as overtime"
+  ),
 
   // Team
   teamTitle: bi("ทีมงาน", "Team"),

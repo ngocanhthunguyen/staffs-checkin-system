@@ -62,6 +62,7 @@ export default async function ReportsPage({
 
   const summary = buildPayrollSummary(records ?? [], th.unknown);
   const totalPayableHours = summary.reduce((s, r) => s + r.totalHours, 0);
+  const totalOvertimeHours = summary.reduce((s, r) => s + r.overtimeHours, 0);
   const totalIncomplete = summary.reduce((s, r) => s + r.incompleteShifts, 0);
 
   return (
@@ -95,11 +96,21 @@ export default async function ReportsPage({
               {totalPayableHours.toFixed(1)} {th.hours}
             </p>
           </div>
-          <div className="rounded-xl bg-amber-50 p-4">
+          <div className="rounded-xl bg-purple-50 p-4">
+            <p className="text-xs text-purple-700">{th.overtimeHours}</p>
+            <p className="text-2xl font-bold text-purple-900">
+              {totalOvertimeHours.toFixed(1)} {th.hours}
+            </p>
+          </div>
+          <div className="col-span-2 rounded-xl bg-amber-50 p-4">
             <p className="text-xs text-amber-700">{th.incompleteShifts}</p>
             <p className="text-2xl font-bold text-amber-900">{totalIncomplete}</p>
           </div>
         </div>
+
+        {totalOvertimeHours > 0 && (
+          <p className="text-center text-xs text-slate-400">{th.overtimeHint}</p>
+        )}
 
         {totalIncomplete > 0 && (
           <div className="flex items-start gap-2 rounded-xl bg-amber-50 px-4 py-3 text-sm text-amber-800">
@@ -141,6 +152,11 @@ export default async function ReportsPage({
                     <p className="text-xs text-slate-500">
                       {data.daysWorked} {th.daysWorked}
                     </p>
+                    {data.overtimeHours > 0 && (
+                      <p className="text-xs font-medium text-purple-600">
+                        +{data.overtimeHours.toFixed(1)} {th.hours} OT
+                      </p>
+                    )}
                   </div>
                 </div>
               ))

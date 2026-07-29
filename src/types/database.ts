@@ -1,5 +1,7 @@
 export type UserRole = "staff" | "manager" | "admin";
 export type CorrectionStatus = "pending" | "approved" | "rejected";
+export type LeaveType = "sick" | "annual";
+export type LeaveStatus = "pending" | "approved" | "rejected";
 
 export interface Site {
   id: string;
@@ -53,6 +55,21 @@ export interface CorrectionRequest {
   review_notes: string | null;
   created_at: string;
   attendance?: Attendance;
+  profiles?: Profile;
+}
+
+export interface LeaveRequest {
+  id: string;
+  staff_id: string;
+  leave_type: LeaveType;
+  start_date: string;
+  days: number;
+  reason: string | null;
+  status: LeaveStatus;
+  reviewed_by: string | null;
+  reviewed_at: string | null;
+  review_notes: string | null;
+  created_at: string;
   profiles?: Profile;
 }
 

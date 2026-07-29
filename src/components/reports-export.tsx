@@ -17,6 +17,7 @@ export function ReportsExport({
   function exportCSV() {
     const periodLabel = period.label;
     const totalHours = summary.reduce((s, r) => s + r.totalHours, 0);
+    const totalOvertime = summary.reduce((s, r) => s + r.overtimeHours, 0);
 
     const lines = [
       `${COMPANY_NAME} - Payroll Export / ส่งออกเงินเดือน`,
@@ -24,11 +25,12 @@ export function ReportsExport({
       `From / ตั้งแต่:,${period.start.toLocaleDateString("th-TH")}`,
       `To / ถึง:,${period.end.toLocaleDateString("th-TH")}`,
       `Total Payable Hours / ชั่วโมงจ่ายเงินรวม:,${totalHours.toFixed(2)}`,
+      `Total Overtime Hours / ชั่วโมงล่วงเวลารวม:,${totalOvertime.toFixed(2)}`,
       "",
-      "พนักงาน / Staff,แผนก / Department,วันทำงาน / Days Worked,ชั่วโมงจ่าย / Payable Hours,ลืมออกงาน / Missing Check-out",
+      "พนักงาน / Staff,แผนก / Department,วันทำงาน / Days Worked,ชั่วโมงปกติ / Regular Hours,ชั่วโมง OT / Overtime Hours,ชั่วโมงจ่ายรวม / Total Payable Hours,ลืมออกงาน / Missing Check-out",
       ...summary.map(
         (s) =>
-          `"${s.name}","${s.department ?? ""}",${s.daysWorked},${s.totalHours.toFixed(2)},${s.incompleteShifts}`
+          `"${s.name}","${s.department ?? ""}",${s.daysWorked},${s.regularHours.toFixed(2)},${s.overtimeHours.toFixed(2)},${s.totalHours.toFixed(2)},${s.incompleteShifts}`
       ),
       "",
       "วันที่ / Date,พนักงาน / Staff,เข้างาน / Check In,ออกงาน / Check Out,ชั่วโมง / Hours,สถานะ / Status",

@@ -9,16 +9,23 @@ import {
   AlertCircle,
   LogOut,
   Users,
+  CalendarDays,
 } from "lucide-react";
 import { signOut } from "@/app/actions/attendance";
 import { COMPANY_NAME, splitBi, th } from "@/lib/i18n";
 import type { Profile } from "@/types/database";
+
+const staffNav = [
+  { href: "/", label: th.checkIn, icon: Clock },
+  { href: "/leave", label: th.leave, icon: CalendarDays },
+];
 
 const managerNav = [
   { href: "/", label: th.checkIn, icon: Clock },
   { href: "/dashboard", label: th.dashboard, icon: LayoutDashboard },
   { href: "/reports", label: th.reports, icon: FileText },
   { href: "/team", label: th.team, icon: Users },
+  { href: "/leave", label: th.leave, icon: CalendarDays },
   { href: "/corrections", label: th.corrections, icon: AlertCircle },
 ];
 
@@ -35,7 +42,7 @@ export function AppShell({
 }) {
   const pathname = usePathname();
   const nav =
-    profile.role === "admin" ? adminNav : profile.role === "manager" ? managerNav : [];
+    profile.role === "admin" ? adminNav : profile.role === "manager" ? managerNav : staffNav;
 
   return (
     <div className="flex min-h-dvh flex-col">
