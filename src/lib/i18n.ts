@@ -48,10 +48,6 @@ export const th = {
   processing: bi("กำลังดำเนินการ...", "Processing..."),
   locationCheck: bi("ตรวจสอบตำแหน่งสำหรับ", "Location check for"),
   radius: bi("รัศมี", "radius"),
-  networkCheckHint: bi(
-    "ต้องเชื่อมต่อ Wi-Fi ของสำนักงานจึงจะลงเวลาได้",
-    "Must be connected to the office Wi-Fi/network to check in"
-  ),
   takePhoto: bi("ถ่ายรูปเพื่อลงเวลา", "Take a photo to check in/out"),
   retakePhoto: bi("ถ่ายใหม่", "Retake"),
   photoRequired: bi(
@@ -88,10 +84,6 @@ export const th = {
       `ต้องอยู่ในรัศมี ${radius} เมตรจาก ${site} จึงจะลงเวลาเข้างานได้`,
       `You must be within ${radius}m of ${site} to check in`
     ),
-  networkError: bi(
-    "ต้องเชื่อมต่อ Wi-Fi ของสำนักงานจึงจะลงเวลาได้",
-    "You must be connected to the office Wi-Fi/network to check in or out"
-  ),
   attendanceReasonRequired: bi(
     "กรุณาเลือกวันและระบุเหตุผล",
     "Please select a day and provide a reason"
