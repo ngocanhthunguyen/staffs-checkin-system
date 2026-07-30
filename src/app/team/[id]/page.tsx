@@ -7,6 +7,7 @@ import { StaffEmploymentForm } from "@/components/staff-employment-form";
 import { calculateLeaveBalances } from "@/lib/leave";
 import { buildPayrollSummary, getMonthlyPeriod } from "@/lib/pay-period";
 import { employmentLabel, roleLabel, statusLabel, th } from "@/lib/i18n";
+import { formatDate, formatTime, getHoursBetween } from "@/lib/utils";
 import type { Profile } from "@/types/database";
 
 export default async function StaffDetailPage({
@@ -51,6 +52,9 @@ export default async function StaffDetailPage({
     .lte("check_in_at", period.end.toISOString());
 
   const [workSummary] = buildPayrollSummary(monthRecords ?? [], th.unknown);
+  const attendanceHistory = [...(monthRecords ?? [])].sort(
+    (a, b) => new Date(b.check_in_at).getTime() - new Date(a.check_in_at).getTime()
+  );
 
   const { data: leaveRequests } = await supabase
     .from("leave_requests")
@@ -139,6 +143,45 @@ export default async function StaffDetailPage({
                 {workSummary?.daysWorked ?? 0}
               </p>
             </div>
+          </div>
+        </section>
+
+        <section>
+          <h2 className="mb-3 text-sm font-semibold uppercase tracking-wide text-slate-500">
+            {th.checkInOutHistory} — {period.label}
+          </h2>
+          <div className="space-y-2">
+            {attendanceHistory.length === 0 ? (
+              <p className="rounded-xl bg-slate-100 px-4 py-6 text-center text-sm text-slate-500">
+                {th.noAttendanceThisMonth}
+              </p>
+            ) : (
+              attendanceHistory.map((record) => {
+                const complete = !!record.check_out_at;
+                const hours = complete
+                  ? getHoursBetween(record.check_in_at, record.check_out_at)
+                  : 0;
+                return (
+                  <div
+                    key={record.id}
+                    className={`rounded-xl border px-4 py-3 text-sm ${
+                      complete
+                        ? "border-slate-200 bg-white"
+                        : "border-amber-200 bg-amber-50"
+                    }`}
+                  >
+                    <p className="font-medium text-slate-800">
+                      {formatDate(record.check_in_at)}
+                    </p>
+                    <p className="text-xs text-slate-500">
+                      {formatTime(record.check_in_at)} →{" "}
+                      {record.check_out_at ? formatTime(record.check_out_at) : th.stillIn} ·{" "}
+                      {complete ? `${hours.toFixed(1)} ${th.hours}` : th.incompleteShifts}
+                    </p>
+                  </div>
+                );
+              })
+            )}
           </div>
         </section>
 

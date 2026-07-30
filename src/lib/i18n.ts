@@ -235,6 +235,8 @@ export const th = {
   backToTeam: bi("กลับไปที่ทีมงาน", "Back to Team"),
   workThisMonth: bi("การทำงานเดือนนี้", "This month's work"),
   recentLeaveRequests: bi("คำขอลาล่าสุด", "Recent leave requests"),
+  checkInOutHistory: bi("ประวัติเข้า-ออกงาน", "Check-in / check-out history"),
+  noAttendanceThisMonth: bi("ไม่มีการเข้างานในเดือนนี้", "No check-ins this month"),
 
   // Employment type
   employmentType: bi("ประเภทการจ้างงาน", "Employment type"),
