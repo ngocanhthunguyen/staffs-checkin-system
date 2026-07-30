@@ -2,8 +2,10 @@
 
 import { revalidatePath } from "next/cache";
 import { createClient } from "@/lib/supabase/server";
+import { createAdminClient } from "@/lib/supabase/admin";
 import { th } from "@/lib/i18n";
 import { calculateLeaveBalances } from "@/lib/leave";
+import { sendLeaveRequestEmail } from "@/lib/email";
 import type { LeaveType } from "@/types/database";
 
 export async function requestLeave(formData: FormData) {
@@ -24,7 +26,7 @@ export async function requestLeave(formData: FormData) {
 
   const { data: requester } = await supabase
     .from("profiles")
-    .select("weekly_hours")
+    .select("full_name, weekly_hours")
     .eq("id", user.id)
     .single();
 
@@ -50,6 +52,37 @@ export async function requestLeave(formData: FormData) {
   });
 
   if (error) return { error: error.message };
+
+  try {
+    const admin = createAdminClient();
+    const { data: reviewers } = await admin
+      .from("profiles")
+      .select("email")
+      .in("role", ["manager", "admin"])
+      .eq("is_active", true);
+
+    // Always-notified addresses on top of manager/admin accounts (comma-separated),
+    // e.g. an HR inbox that isn't necessarily a login in the system.
+    const extraEmails = (process.env.LEAVE_NOTIFY_EXTRA_EMAILS ?? "")
+      .split(",")
+      .map((e) => e.trim())
+      .filter(Boolean);
+
+    const recipients = Array.from(
+      new Set([...(reviewers ?? []).map((r) => r.email).filter(Boolean), ...extraEmails])
+    );
+
+    await sendLeaveRequestEmail({
+      to: recipients,
+      staffName: requester?.full_name ?? "A staff member",
+      leaveType,
+      startDate,
+      days,
+      reason,
+    });
+  } catch (err) {
+    console.error("Failed to notify reviewers of leave request", err);
+  }
 
   revalidatePath("/leave");
   return { success: true };
