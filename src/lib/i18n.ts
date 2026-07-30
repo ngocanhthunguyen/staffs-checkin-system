@@ -216,6 +216,11 @@ export const th = {
     "Not enough remaining leave balance for this request"
   ),
   invalidLeaveDays: bi("จำนวนวันไม่ถูกต้อง", "Please enter a valid number of days"),
+  leaveBalanceNotSetForCasual: bi(
+    "บริษัทยังไม่ได้กำหนดจำนวนวันลาสำหรับพนักงานชั่วคราว — คุณยังสามารถส่งคำขอลาด้านล่างได้ตามปกติ ผู้ดูแลระบบจะพิจารณาเป็นรายกรณี",
+    "Leave day entitlements haven't been finalized for casual staff yet — you can still submit a request below as normal, and it'll be reviewed case-by-case by an admin."
+  ),
+  leaveBalanceNotSet: bi("ยังไม่กำหนด", "Not set"),
 
   // Reports / overtime
   regularHours: bi("ชั่วโมงปกติ", "Regular hours"),
@@ -234,11 +239,11 @@ export const th = {
   // Employment type
   employmentType: bi("ประเภทการจ้างงาน", "Employment type"),
   fullTime: bi("เต็มเวลา", "Full-time"),
-  partTime: bi("พาร์ทไทม์", "Part-time"),
+  partTime: bi("ชั่วคราว (Casual)", "Casual"),
   weeklyHours: bi("ชั่วโมงทำงาน/สัปดาห์", "Hours per week"),
   weeklyHoursHint: bi(
-    "ใช้คำนวณสัดส่วนวันลาสำหรับพนักงานพาร์ทไทม์ เทียบกับเต็มเวลา 48 ชม./สัปดาห์",
-    "Used to prorate sick/annual leave for part-time staff, compared to a full-time 48 hrs/week"
+    "ใช้คำนวณสัดส่วนวันลาสำหรับพนักงานชั่วคราว เทียบกับเต็มเวลา 48 ชม./สัปดาห์",
+    "Used to prorate sick/annual leave for casual staff, compared to a full-time 48 hrs/week"
   ),
   saveChanges: bi("บันทึกการเปลี่ยนแปลง", "Save changes"),
   employmentUpdated: bi("อัปเดตข้อมูลการจ้างงานแล้ว", "Employment details updated"),
@@ -246,6 +251,9 @@ export const th = {
     "กรุณาระบุชั่วโมงทำงานต่อสัปดาห์ให้ถูกต้อง (1-80)",
     "Please enter valid weekly hours (1-80)"
   ),
+  paidByDay: bi("จ่ายเป็นรายวัน", "Paid by day"),
+  paidByHour: bi("จ่ายเป็นรายชั่วโมง", "Paid by hour"),
+  payBasis: bi("รูปแบบการจ่ายเงิน", "Pay basis"),
 
   // Team
   teamTitle: bi("ทีมงาน", "Team"),

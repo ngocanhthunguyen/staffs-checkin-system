@@ -27,11 +27,14 @@ export function ReportsExport({
       `Total Payable Hours / ชั่วโมงจ่ายเงินรวม:,${totalHours.toFixed(2)}`,
       `Total Overtime Hours / ชั่วโมงล่วงเวลารวม:,${totalOvertime.toFixed(2)}`,
       "",
-      "พนักงาน / Staff,แผนก / Department,ประเภท / Employment,วันทำงาน / Days Worked,ชั่วโมงปกติ / Regular Hours,ชั่วโมง OT / Overtime Hours,ชั่วโมงจ่ายรวม / Total Payable Hours,ลืมออกงาน / Missing Check-out",
-      ...summary.map(
-        (s) =>
-          `"${s.name}","${s.department ?? ""}","${employmentLabel(s.employmentType)}",${s.daysWorked},${s.regularHours.toFixed(2)},${s.overtimeHours.toFixed(2)},${s.totalHours.toFixed(2)},${s.incompleteShifts}`
-      ),
+      "พนักงาน / Staff,แผนก / Department,ประเภท / Employment,รูปแบบจ่ายเงิน / Pay Basis,วันทำงาน / Days Worked,ชั่วโมงปกติ / Regular Hours,ชั่วโมง OT / Overtime Hours,ชั่วโมงจ่ายรวม / Total Payable Hours,ลืมออกงาน / Missing Check-out",
+      ...summary.map((s) => {
+        const payBasis =
+          s.employmentType === "part_time"
+            ? "Paid by hour / รายชั่วโมง"
+            : "Paid by day / รายวัน";
+        return `"${s.name}","${s.department ?? ""}","${employmentLabel(s.employmentType)}","${payBasis}",${s.daysWorked},${s.regularHours.toFixed(2)},${s.overtimeHours.toFixed(2)},${s.totalHours.toFixed(2)},${s.incompleteShifts}`;
+      }),
       "",
       "วันที่ / Date,พนักงาน / Staff,เข้างาน / Check In,ออกงาน / Check Out,ชั่วโมง / Hours,สถานะ / Status",
       ...records.map((r) => {

@@ -146,6 +146,9 @@ export default async function ReportsPage({
                       {data.department && `${data.department} · `}
                       {employmentLabel(data.employmentType)}
                     </p>
+                    <p className="text-xs text-slate-400">
+                      {data.employmentType === "part_time" ? th.paidByHour : th.paidByDay}
+                    </p>
                     {data.incompleteShifts > 0 && (
                       <p className="text-xs text-amber-600">
                         {data.incompleteShifts} {th.incompleteShifts}
@@ -153,12 +156,25 @@ export default async function ReportsPage({
                     )}
                   </div>
                   <div className="text-right">
-                    <p className="font-semibold text-blue-600">
-                      {data.totalHours.toFixed(1)} {th.hours}
-                    </p>
-                    <p className="text-xs text-slate-500">
-                      {data.daysWorked} {th.daysWorked}
-                    </p>
+                    {data.employmentType === "part_time" ? (
+                      <>
+                        <p className="font-semibold text-blue-600">
+                          {data.totalHours.toFixed(1)} {th.hours}
+                        </p>
+                        <p className="text-xs text-slate-500">
+                          {data.daysWorked} {th.daysWorked}
+                        </p>
+                      </>
+                    ) : (
+                      <>
+                        <p className="font-semibold text-blue-600">
+                          {data.daysWorked} {th.daysWorked}
+                        </p>
+                        <p className="text-xs text-slate-500">
+                          {data.totalHours.toFixed(1)} {th.hours}
+                        </p>
+                      </>
+                    )}
                     {data.overtimeHours > 0 && (
                       <p className="text-xs font-medium text-purple-600">
                         +{data.overtimeHours.toFixed(1)} {th.hours} OT

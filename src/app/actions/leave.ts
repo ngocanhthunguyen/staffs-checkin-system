@@ -24,21 +24,28 @@ export async function requestLeave(formData: FormData) {
 
   const { data: requester } = await supabase
     .from("profiles")
-    .select("weekly_hours")
+    .select("weekly_hours, employment_type")
     .eq("id", user.id)
     .single();
 
-  const year = new Date(startDate).getFullYear();
-  const { data: existing } = await supabase
-    .from("leave_requests")
-    .select("leave_type, start_date, days, status")
-    .eq("staff_id", user.id);
+  // Casual staff don't have a finalized leave entitlement yet, so their
+  // requests always go through for admin to review case-by-case instead of
+  // being auto-blocked against a balance we haven't agreed on.
+  const isCasual = requester?.employment_type === "part_time";
 
-  const balances = calculateLeaveBalances(existing ?? [], requester?.weekly_hours, year);
-  const balance = balances.find((b) => b.type === leaveType);
+  if (!isCasual) {
+    const year = new Date(startDate).getFullYear();
+    const { data: existing } = await supabase
+      .from("leave_requests")
+      .select("leave_type, start_date, days, status")
+      .eq("staff_id", user.id);
 
-  if (balance && days > balance.remaining) {
-    return { error: th.notEnoughLeaveBalance };
+    const balances = calculateLeaveBalances(existing ?? [], requester?.weekly_hours, year);
+    const balance = balances.find((b) => b.type === leaveType);
+
+    if (balance && days > balance.remaining) {
+      return { error: th.notEnoughLeaveBalance };
+    }
   }
 
   const { error } = await supabase.from("leave_requests").insert({

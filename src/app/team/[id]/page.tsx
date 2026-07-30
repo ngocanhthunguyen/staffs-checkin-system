@@ -59,6 +59,7 @@ export default async function StaffDetailPage({
     .order("created_at", { ascending: false });
 
   const balances = calculateLeaveBalances(leaveRequests ?? [], staffMember.weekly_hours);
+  const isCasual = staffMember.employment_type === "part_time";
 
   const roleColors: Record<string, string> = {
     staff: "bg-slate-100 text-slate-700",
@@ -90,6 +91,7 @@ export default async function StaffDetailPage({
             {staffMember.email}
             {staffMember.department && ` · ${staffMember.department}`}
             {` · ${employmentLabel(staffMember.employment_type)}`}
+            {` · ${isCasual ? th.paidByHour : th.paidByDay}`}
           </p>
           {(staffMember.sites as { name: string } | null)?.name && (
             <p className="text-xs text-slate-400">
@@ -111,10 +113,15 @@ export default async function StaffDetailPage({
           <h2 className="mb-3 text-sm font-semibold uppercase tracking-wide text-slate-500">
             {th.workThisMonth} — {period.label}
           </h2>
+          <p className="mb-2 text-xs text-slate-400">
+            {th.payBasis}: {isCasual ? th.paidByHour : th.paidByDay}
+          </p>
           <div className="grid grid-cols-3 gap-3">
-            <div className="rounded-xl bg-blue-50 p-3">
-              <p className="text-xs text-blue-700">{th.totalHours}</p>
-              <p className="text-xl font-bold text-blue-900">
+            <div className={`rounded-xl p-3 ${isCasual ? "bg-blue-50" : "bg-slate-100"}`}>
+              <p className={`text-xs ${isCasual ? "text-blue-700" : "text-slate-600"}`}>
+                {th.totalHours}
+              </p>
+              <p className={`text-xl font-bold ${isCasual ? "text-blue-900" : "text-slate-900"}`}>
                 {(workSummary?.totalHours ?? 0).toFixed(1)}
               </p>
             </div>
@@ -124,9 +131,11 @@ export default async function StaffDetailPage({
                 {(workSummary?.overtimeHours ?? 0).toFixed(1)}
               </p>
             </div>
-            <div className="rounded-xl bg-slate-100 p-3">
-              <p className="text-xs text-slate-600">{th.daysWorked}</p>
-              <p className="text-xl font-bold text-slate-900">
+            <div className={`rounded-xl p-3 ${isCasual ? "bg-slate-100" : "bg-blue-50"}`}>
+              <p className={`text-xs ${isCasual ? "text-slate-600" : "text-blue-700"}`}>
+                {th.daysWorked}
+              </p>
+              <p className={`text-xl font-bold ${isCasual ? "text-slate-900" : "text-blue-900"}`}>
                 {workSummary?.daysWorked ?? 0}
               </p>
             </div>
@@ -137,18 +146,24 @@ export default async function StaffDetailPage({
           <h2 className="mb-3 text-sm font-semibold uppercase tracking-wide text-slate-500">
             {th.leaveBalance}
           </h2>
-          <div className="grid grid-cols-2 gap-3">
-            {balances.map((b) => (
-              <div key={b.type} className="rounded-xl border border-slate-200 bg-white p-4">
-                <p className="text-sm font-medium text-slate-700">
-                  {b.type === "sick" ? th.sickLeave : th.annualLeave}
-                </p>
-                <p className="mt-1 text-2xl font-bold text-blue-600">{b.remaining}</p>
-                <p className="text-xs text-slate-500">{th.daysRemaining}</p>
-                <p className="mt-1 text-xs text-slate-400">{th.daysUsedOf(b.used, b.entitlement)}</p>
-              </div>
-            ))}
-          </div>
+          {isCasual ? (
+            <p className="rounded-xl bg-amber-50 px-4 py-3 text-sm text-amber-800">
+              {th.leaveBalanceNotSetForCasual}
+            </p>
+          ) : (
+            <div className="grid grid-cols-2 gap-3">
+              {balances.map((b) => (
+                <div key={b.type} className="rounded-xl border border-slate-200 bg-white p-4">
+                  <p className="text-sm font-medium text-slate-700">
+                    {b.type === "sick" ? th.sickLeave : th.annualLeave}
+                  </p>
+                  <p className="mt-1 text-2xl font-bold text-blue-600">{b.remaining}</p>
+                  <p className="text-xs text-slate-500">{th.daysRemaining}</p>
+                  <p className="mt-1 text-xs text-slate-400">{th.daysUsedOf(b.used, b.entitlement)}</p>
+                </div>
+              ))}
+            </div>
+          )}
         </section>
 
         <section>

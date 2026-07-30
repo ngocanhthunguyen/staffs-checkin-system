@@ -31,10 +31,15 @@ export default async function LeavePage() {
     .eq("staff_id", user.id)
     .order("created_at", { ascending: false });
 
+  const isCasual = profile.employment_type === "part_time";
   const myBalances = calculateLeaveBalances(myRequests ?? [], profile.weekly_hours);
 
   let allRequests: LeaveRequest[] = [];
-  let teamBalances: { name: string; balances: ReturnType<typeof calculateLeaveBalances> }[] = [];
+  let teamBalances: {
+    name: string;
+    isCasual: boolean;
+    balances: ReturnType<typeof calculateLeaveBalances>;
+  }[] = [];
 
   if (isManager) {
     const { data } = await supabase
@@ -45,7 +50,7 @@ export default async function LeavePage() {
 
     const { data: staffList } = await supabase
       .from("profiles")
-      .select("id, full_name, weekly_hours")
+      .select("id, full_name, weekly_hours, employment_type")
       .eq("is_active", true)
       .order("full_name");
 
@@ -53,6 +58,7 @@ export default async function LeavePage() {
       const staffRequests = allRequests.filter((r) => r.staff_id === staff.id);
       return {
         name: staff.full_name,
+        isCasual: staff.employment_type === "part_time",
         balances: calculateLeaveBalances(staffRequests, staff.weekly_hours),
       };
     });
@@ -72,18 +78,24 @@ export default async function LeavePage() {
           <h2 className="mb-3 text-sm font-semibold uppercase tracking-wide text-slate-500">
             {th.leaveBalance}
           </h2>
-          <div className="grid grid-cols-2 gap-3">
-            {myBalances.map((b) => (
-              <div key={b.type} className="rounded-xl border border-slate-200 bg-white p-4">
-                <p className="text-sm font-medium text-slate-700">
-                  {b.type === "sick" ? th.sickLeave : th.annualLeave}
-                </p>
-                <p className="mt-1 text-2xl font-bold text-blue-600">{b.remaining}</p>
-                <p className="text-xs text-slate-500">{th.daysRemaining}</p>
-                <p className="mt-1 text-xs text-slate-400">{th.daysUsedOf(b.used, b.entitlement)}</p>
-              </div>
-            ))}
-          </div>
+          {isCasual ? (
+            <p className="rounded-xl bg-amber-50 px-4 py-3 text-sm text-amber-800">
+              {th.leaveBalanceNotSetForCasual}
+            </p>
+          ) : (
+            <div className="grid grid-cols-2 gap-3">
+              {myBalances.map((b) => (
+                <div key={b.type} className="rounded-xl border border-slate-200 bg-white p-4">
+                  <p className="text-sm font-medium text-slate-700">
+                    {b.type === "sick" ? th.sickLeave : th.annualLeave}
+                  </p>
+                  <p className="mt-1 text-2xl font-bold text-blue-600">{b.remaining}</p>
+                  <p className="text-xs text-slate-500">{th.daysRemaining}</p>
+                  <p className="mt-1 text-xs text-slate-400">{th.daysUsedOf(b.used, b.entitlement)}</p>
+                </div>
+              ))}
+            </div>
+          )}
         </section>
 
         <LeaveForm />
@@ -143,12 +155,25 @@ export default async function LeavePage() {
                   <tbody>
                     {teamBalances.map((staff) => (
                       <tr key={staff.name} className="border-t border-slate-100">
-                        <td className="px-3 py-2">{staff.name}</td>
-                        {staff.balances.map((b) => (
-                          <td key={b.type} className="px-3 py-2 text-right">
-                            {b.remaining}/{b.entitlement}
+                        <td className="px-3 py-2">
+                          {staff.name}
+                          {staff.isCasual && (
+                            <span className="ml-1.5 rounded-full bg-slate-100 px-1.5 py-0.5 text-[10px] font-medium text-slate-500">
+                              {th.partTime}
+                            </span>
+                          )}
+                        </td>
+                        {staff.isCasual ? (
+                          <td colSpan={2} className="px-3 py-2 text-right text-slate-400">
+                            {th.leaveBalanceNotSet}
                           </td>
-                        ))}
+                        ) : (
+                          staff.balances.map((b) => (
+                            <td key={b.type} className="px-3 py-2 text-right">
+                              {b.remaining}/{b.entitlement}
+                            </td>
+                          ))
+                        )}
                       </tr>
                     ))}
                   </tbody>
