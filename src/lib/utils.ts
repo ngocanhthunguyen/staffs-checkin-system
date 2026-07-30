@@ -45,7 +45,7 @@ export function formatTime(dateStr: string): string {
   return `${hours}:${minutes}`;
 }
 
-/** Clear bilingual date: 28 Jul 2026 / 28 กรกฎาคม 2569 */
+/** Clear bilingual date: 28 Jul 2026 / 28 กรกฎาคม 2026 */
 export function formatDate(dateStr: string): string {
   const d = new Date(dateStr);
   const en = d.toLocaleDateString("en-AU", {
@@ -57,6 +57,9 @@ export function formatDate(dateStr: string): string {
     day: "numeric",
     month: "long",
     year: "numeric",
+    // Force the standard (Gregorian) year instead of the Buddhist Era year
+    // (e.g. 2026 instead of 2569) since that's confusing for non-Thai staff.
+    calendar: "gregory",
   });
   return `${en} / ${thai}`;
 }
@@ -74,6 +77,7 @@ export function formatTodayHeader(date: Date = new Date()): string {
     day: "numeric",
     month: "long",
     year: "numeric",
+    calendar: "gregory",
   });
   return `${en} / ${thai}`;
 }

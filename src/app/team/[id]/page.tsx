@@ -232,7 +232,9 @@ export default async function StaffDetailPage({
                     <StatusBadge status={req.status} />
                   </div>
                   <p className="mt-1 text-xs text-slate-500">
-                    {new Date(req.start_date).toLocaleDateString("th-TH")}
+                    {new Date(req.start_date).toLocaleDateString("th-TH", {
+                      calendar: "gregory",
+                    })}
                     {req.reason && ` — ${req.reason}`}
                   </p>
                 </div>

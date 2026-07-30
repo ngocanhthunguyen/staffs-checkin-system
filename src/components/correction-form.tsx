@@ -38,7 +38,10 @@ export function CorrectionForm({ records }: { records: Attendance[] }) {
           <option value="">{th.selectRecord}</option>
           {records.map((r) => (
             <option key={r.id} value={r.id}>
-              {new Date(r.check_in_at).toLocaleDateString("th-TH")} —{" "}
+              {new Date(r.check_in_at).toLocaleDateString("th-TH", {
+                calendar: "gregory",
+              })}{" "}
+              —{" "}
               {new Date(r.check_in_at).toLocaleTimeString("th-TH", {
                 hour: "2-digit",
                 minute: "2-digit",

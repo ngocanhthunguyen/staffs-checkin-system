@@ -27,7 +27,12 @@ function formatPeriodLabel(start: Date, end: Date): string {
   const en = (d: Date) =>
     d.toLocaleDateString("en-AU", { day: "numeric", month: "short", year: "numeric" });
   const thai = (d: Date) =>
-    d.toLocaleDateString("th-TH", { day: "numeric", month: "long", year: "numeric" });
+    d.toLocaleDateString("th-TH", {
+      day: "numeric",
+      month: "long",
+      year: "numeric",
+      calendar: "gregory",
+    });
   return `${en(start)} – ${en(end)} / ${thai(start)} – ${thai(end)}`;
 }
 
@@ -40,7 +45,11 @@ export function getMonthlyPeriod(year: number, month: number): PayPeriod {
     end,
     label: start.toLocaleDateString("en-AU", { month: "long", year: "numeric" }) +
       " / " +
-      start.toLocaleDateString("th-TH", { month: "long", year: "numeric" }),
+      start.toLocaleDateString("th-TH", {
+        month: "long",
+        year: "numeric",
+        calendar: "gregory",
+      }),
     key: `${year}-${String(month).padStart(2, "0")}`,
   };
 }

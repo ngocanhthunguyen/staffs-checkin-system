@@ -36,26 +36,40 @@ export function CorrectionReview({ request }: { request: CorrectionRequest }) {
         <div className="mt-3 grid grid-cols-2 gap-2 text-xs text-slate-500">
           <div className="rounded-lg bg-white/60 p-2">
             <p className="font-medium text-slate-700">{th.currentCheckIn}</p>
-            <p>{new Date(attendance.check_in_at).toLocaleString("th-TH")}</p>
+            <p>
+              {new Date(attendance.check_in_at).toLocaleString("th-TH", {
+                calendar: "gregory",
+              })}
+            </p>
           </div>
           <div className="rounded-lg bg-white/60 p-2">
             <p className="font-medium text-slate-700">{th.currentCheckOut}</p>
             <p>
               {attendance.check_out_at
-                ? new Date(attendance.check_out_at).toLocaleString("th-TH")
+                ? new Date(attendance.check_out_at).toLocaleString("th-TH", {
+                    calendar: "gregory",
+                  })
                 : "—"}
             </p>
           </div>
           {request.requested_check_in && (
             <div className="rounded-lg bg-green-100/60 p-2">
               <p className="font-medium text-green-800">{th.requestedCheckIn}</p>
-              <p>{new Date(request.requested_check_in).toLocaleString("th-TH")}</p>
+              <p>
+                {new Date(request.requested_check_in).toLocaleString("th-TH", {
+                  calendar: "gregory",
+                })}
+              </p>
             </div>
           )}
           {request.requested_check_out && (
             <div className="rounded-lg bg-green-100/60 p-2">
               <p className="font-medium text-green-800">{th.requestedCheckOut}</p>
-              <p>{new Date(request.requested_check_out).toLocaleString("th-TH")}</p>
+              <p>
+                {new Date(request.requested_check_out).toLocaleString("th-TH", {
+                  calendar: "gregory",
+                })}
+              </p>
             </div>
           )}
         </div>
