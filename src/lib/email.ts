@@ -37,7 +37,7 @@ export async function sendLeaveRequestEmail({
   });
 
   try {
-    await resend.emails.send({
+    const { data, error } = await resend.emails.send({
       from: `${COMPANY_NAME} Staff Check-In <${FROM_ADDRESS}>`,
       to,
       subject: `New leave request from ${staffName}`,
@@ -74,6 +74,15 @@ export async function sendLeaveRequestEmail({
         </div>
       `,
     });
+
+    if (error) {
+      // Resend's SDK resolves (doesn't throw) on API-level failures like
+      // sandbox/domain restrictions, so this must be checked explicitly.
+      console.error("Resend rejected the leave request email:", JSON.stringify(error));
+      return;
+    }
+
+    console.log(`Leave request email sent to ${to.join(", ")} (id: ${data?.id})`);
   } catch (err) {
     console.error("Failed to send leave request email", err);
   }
