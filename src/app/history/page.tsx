@@ -22,10 +22,6 @@ export default async function HistoryPage() {
 
   if (!profile) redirect("/login");
 
-  if (!["manager", "admin"].includes(profile.role)) {
-    redirect("/");
-  }
-
   const payPeriod = getFortnightContaining(new Date());
 
   const { data: periodRecords } = await supabase

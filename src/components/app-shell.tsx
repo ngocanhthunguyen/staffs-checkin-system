@@ -10,6 +10,7 @@ import {
   LogOut,
   Users,
   CalendarDays,
+  History,
 } from "lucide-react";
 import { signOut } from "@/app/actions/attendance";
 import { COMPANY_NAME, splitBi, th } from "@/lib/i18n";
@@ -17,7 +18,9 @@ import type { Profile } from "@/types/database";
 
 const staffNav = [
   { href: "/", label: th.checkIn, icon: Clock },
+  { href: "/history", label: th.history, icon: History },
   { href: "/leave", label: th.leave, icon: CalendarDays },
+  { href: "/corrections", label: th.corrections, icon: AlertCircle },
 ];
 
 const managerNav = [

@@ -105,12 +105,17 @@ begin
   -- New staff are auto-assigned to the first/only site so GPS and
   -- office-network checks apply to them immediately. If you add more
   -- sites later, reassign specific staff manually in Table Editor.
+  --
+  -- Role is always hard-coded to 'staff' here — never trust a role coming
+  -- from the client's sign-up request metadata, since the Supabase anon
+  -- key is public and anyone could otherwise self-signup as an admin.
+  -- Promote people to manager/admin afterwards from the Team page.
   insert into public.profiles (id, full_name, email, role, site_id)
   values (
     new.id,
     coalesce(new.raw_user_meta_data->>'full_name', split_part(new.email, '@', 1)),
     new.email,
-    coalesce((new.raw_user_meta_data->>'role')::public.user_role, 'staff'),
+    'staff',
     (select id from public.sites order by created_at limit 1)
   );
   return new;
@@ -173,6 +178,37 @@ create policy "Managers can update all profiles"
   on public.profiles for update to authenticated
   using (public.is_manager_or_admin());
 
+-- A staff member's own "update own profile" policy above has no column
+-- restrictions (Postgres RLS is row-level, not column-level), so without
+-- this trigger a staff member could call the Supabase client directly
+-- (e.g. from the browser console) to set their own role/is_active/
+-- employment_type/weekly_hours/site_id. Managers/admins are unaffected.
+create or replace function public.prevent_profile_privilege_escalation()
+returns trigger as $$
+begin
+  -- service_role (e.g. server-only cron/admin jobs) bypasses this check;
+  -- it never runs with an end-user's session anyway.
+  if public.is_manager_or_admin() or auth.role() = 'service_role' then
+    return new;
+  end if;
+
+  if new.role is distinct from old.role
+    or new.is_active is distinct from old.is_active
+    or new.employment_type is distinct from old.employment_type
+    or new.weekly_hours is distinct from old.weekly_hours
+    or new.site_id is distinct from old.site_id
+  then
+    raise exception 'Not authorized to change this field. Ask a manager or admin.';
+  end if;
+
+  return new;
+end;
+$$ language plpgsql;
+
+create trigger profiles_prevent_escalation
+  before update on public.profiles
+  for each row execute function public.prevent_profile_privilege_escalation();
+
 -- Attendance policies
 create policy "Staff can view own attendance"
   on public.attendance for select to authenticated
@@ -190,6 +226,44 @@ create policy "Staff can update own open attendance"
 create policy "Managers can update any attendance"
   on public.attendance for update to authenticated
   using (public.is_manager_or_admin());
+
+-- The "update own open attendance" policy above has no column restrictions
+-- and doesn't check the record is still open, so without this trigger a
+-- staff member could tamper with their own check-in time/GPS/photo, or
+-- reopen an already-closed shift, bypassing the geofence/selfie anti-cheat
+-- checks entirely. Corrections to closed records must go through the
+-- correction-request flow instead. Managers/admins are unaffected.
+create or replace function public.prevent_attendance_tampering()
+returns trigger as $$
+begin
+  -- service_role bypass: the photo-cleanup cron job nulls out photo paths on
+  -- old (already closed) records using the service-role key, which must
+  -- still be allowed through.
+  if public.is_manager_or_admin() or auth.role() = 'service_role' then
+    return new;
+  end if;
+
+  if old.check_out_at is not null then
+    raise exception 'This record is already closed — submit a correction request instead.';
+  end if;
+
+  if new.staff_id is distinct from old.staff_id
+    or new.site_id is distinct from old.site_id
+    or new.check_in_at is distinct from old.check_in_at
+    or new.check_in_lat is distinct from old.check_in_lat
+    or new.check_in_lng is distinct from old.check_in_lng
+    or new.check_in_photo_path is distinct from old.check_in_photo_path
+  then
+    raise exception 'Cannot modify check-in details directly.';
+  end if;
+
+  return new;
+end;
+$$ language plpgsql;
+
+create trigger attendance_prevent_tampering
+  before update on public.attendance
+  for each row execute function public.prevent_attendance_tampering();
 
 -- Correction requests policies
 create policy "Staff can view own correction requests"
