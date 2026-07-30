@@ -28,21 +28,28 @@ export default async function DashboardPage() {
   const todayStart = new Date();
   todayStart.setHours(0, 0, 0, 0);
 
+  // Admins don't check in/out, so they're excluded from this roster entirely
+  // (otherwise they'd permanently show up as "Absent", which is confusing).
   const { data: allStaff } = await supabase
     .from("profiles")
     .select("*")
     .eq("is_active", true)
+    .neq("role", "admin")
     .order("full_name");
 
   const { data: todayAttendance } = await supabase
     .from("attendance")
-    .select("*, profiles(full_name, department)")
+    .select("*, profiles(full_name, department, role)")
     .gte("check_in_at", todayStart.toISOString())
     .order("check_in_at", { ascending: false });
 
+  const nonAdminAttendance = (todayAttendance ?? []).filter(
+    (a) => (a as { profiles?: { role?: string } }).profiles?.role !== "admin"
+  );
+
   const attendanceWithPhotos = await attachSignedPhotoUrls(
     supabase,
-    todayAttendance ?? []
+    nonAdminAttendance
   );
 
   const checkedIn = attendanceWithPhotos.filter((a) => !a.check_out_at);

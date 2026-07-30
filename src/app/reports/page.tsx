@@ -53,14 +53,20 @@ export default async function ReportsPage({
   }));
   const currentFortnightKey = getFortnightContaining(new Date()).key;
 
-  const { data: records } = await supabase
+  const { data: allRecords } = await supabase
     .from("attendance")
-    .select("*, profiles(full_name, department, employment_type)")
+    .select("*, profiles(full_name, department, employment_type, role)")
     .gte("check_in_at", period.start.toISOString())
     .lte("check_in_at", period.end.toISOString())
     .order("check_in_at", { ascending: true });
 
-  const summary = buildPayrollSummary(records ?? [], th.unknown);
+  // Admins don't check in/out and aren't paid hourly, so exclude them from
+  // payroll summaries and exports to avoid confusion when running payroll.
+  const records = (allRecords ?? []).filter(
+    (r) => (r as { profiles?: { role?: string } }).profiles?.role !== "admin"
+  );
+
+  const summary = buildPayrollSummary(records, th.unknown);
   const totalPayableHours = summary.reduce((s, r) => s + r.totalHours, 0);
   const totalOvertimeHours = summary.reduce((s, r) => s + r.overtimeHours, 0);
   const totalIncomplete = summary.reduce((s, r) => s + r.incompleteShifts, 0);
