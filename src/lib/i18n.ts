@@ -263,8 +263,18 @@ export const th = {
   inactive: bi("ไม่ใช้งาน", "Inactive"),
   promoteManager: bi("ตั้งเป็นผู้จัดการ", "Promote a manager"),
   promoteManagerHint: bi(
-    "ไปที่ Supabase → Table Editor → profiles → เปลี่ยน role เป็น manager หรือ admin",
-    "In Supabase → Table Editor → profiles → change role to manager or admin"
+    "แอดมินสามารถเปลี่ยนตำแหน่งได้จากหน้าโปรไฟล์ของพนักงาน (แตะชื่อพนักงานด้านบน)",
+    "Admins can change a teammate's role from their profile page (tap their name above)"
+  ),
+  changeRole: bi("เปลี่ยนตำแหน่ง", "Change role"),
+  roleUpdated: bi("อัปเดตตำแหน่งแล้ว", "Role updated"),
+  cannotChangeOwnRole: bi(
+    "ไม่สามารถเปลี่ยนตำแหน่งของตัวเองได้ ให้แอดมินคนอื่นเปลี่ยนแทน",
+    "You can't change your own role — ask another admin to do it"
+  ),
+  changeRoleHint: bi(
+    "ผู้ดูแลระบบเท่านั้นที่เปลี่ยนตำแหน่งได้ เปลี่ยนเป็นผู้จัดการหรือแอดมินอย่างระมัดระวัง เพราะจะมีสิทธิ์เข้าถึงข้อมูลพนักงานทั้งหมด",
+    "Only admins can change roles. Promote to manager/admin carefully — they get access to everyone's data."
   ),
   noSiteWarning: bi(
     "ไม่ได้ผูกไซต์ — ไม่มีการตรวจสอบ GPS/Wi-Fi",

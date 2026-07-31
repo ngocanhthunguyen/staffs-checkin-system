@@ -4,6 +4,7 @@ import { ChevronLeft } from "lucide-react";
 import { createClient } from "@/lib/supabase/server";
 import { AppShell } from "@/components/app-shell";
 import { StaffEmploymentForm } from "@/components/staff-employment-form";
+import { StaffRoleForm } from "@/components/staff-role-form";
 import { calculateLeaveBalances } from "@/lib/leave";
 import { buildPayrollSummary, getMonthlyPeriod } from "@/lib/pay-period";
 import { employmentLabel, roleLabel, statusLabel, th } from "@/lib/i18n";
@@ -108,6 +109,10 @@ export default async function StaffDetailPage({
             <p className="mt-1 text-xs font-medium text-red-500">{th.inactive}</p>
           )}
         </div>
+
+        {profile.role === "admin" && staffMember.id !== profile.id && (
+          <StaffRoleForm staffId={staffMember.id} role={staffMember.role} />
+        )}
 
         <StaffEmploymentForm
           staffId={staffMember.id}
