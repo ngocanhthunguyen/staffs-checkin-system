@@ -182,18 +182,35 @@ create policy "Managers can update all profiles"
 -- restrictions (Postgres RLS is row-level, not column-level), so without
 -- this trigger a staff member could call the Supabase client directly
 -- (e.g. from the browser console) to set their own role/is_active/
--- employment_type/weekly_hours/site_id. Managers/admins are unaffected.
+-- employment_type/weekly_hours/site_id. Managers/admins are unaffected for
+-- most fields, but changing `role` specifically requires an actual admin —
+-- otherwise a manager could grant themselves admin via the same devtools
+-- route, bypassing the app's admin-only "Change role" feature.
 create or replace function public.prevent_profile_privilege_escalation()
 returns trigger as $$
+declare
+  actor_is_admin boolean;
 begin
-  -- service_role (e.g. server-only cron/admin jobs) bypasses this check;
-  -- it never runs with an end-user's session anyway.
-  if public.is_manager_or_admin() or auth.role() = 'service_role' then
+  if auth.role() = 'service_role' then
     return new;
   end if;
 
-  if new.role is distinct from old.role
-    or new.is_active is distinct from old.is_active
+  if new.role is distinct from old.role then
+    select exists (
+      select 1 from public.profiles
+      where id = auth.uid() and role = 'admin' and is_active = true
+    ) into actor_is_admin;
+
+    if not actor_is_admin then
+      raise exception 'Only an admin can change a teammate''s role.';
+    end if;
+  end if;
+
+  if public.is_manager_or_admin() then
+    return new;
+  end if;
+
+  if new.is_active is distinct from old.is_active
     or new.employment_type is distinct from old.employment_type
     or new.weekly_hours is distinct from old.weekly_hours
     or new.site_id is distinct from old.site_id
