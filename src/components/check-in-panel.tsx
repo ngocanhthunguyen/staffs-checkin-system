@@ -33,16 +33,32 @@ export function CheckInPanel({
     }
 
     startTransition(async () => {
-      try {
-        let lat: number | undefined;
-        let lng: number | undefined;
+      let lat: number | undefined;
+      let lng: number | undefined;
+      const needsLocation = site?.latitude != null && site?.longitude != null;
 
-        if (site?.latitude != null && site?.longitude != null) {
+      if (needsLocation) {
+        try {
           const position = await getCurrentPosition();
           lat = position.coords.latitude;
           lng = position.coords.longitude;
+        } catch {
+          if (action === "in") {
+            // Check-in enforces the office geofence server-side, so without
+            // a GPS fix we can't verify that — stop here with a clear error
+            // instead of silently letting the check-in through unchecked.
+            setError(th.gpsError);
+            return;
+          }
+          // Check-out never enforces the geofence server-side (staff may
+          // reasonably already be stepping out, indoors, etc.), so treat
+          // location as best-effort here: proceed without it rather than
+          // blocking someone from clocking out just because GPS was slow,
+          // timed out, or briefly unavailable.
         }
+      }
 
+      try {
         const result =
           action === "in"
             ? await checkIn(lat, lng, photoDataUrl)
