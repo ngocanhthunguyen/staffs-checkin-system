@@ -124,6 +124,7 @@ export default async function LeavePage() {
                   </div>
                   <p className="mt-1 text-xs text-slate-500">
                     {new Date(req.start_date).toLocaleDateString("th-TH", {
+                      timeZone: "Asia/Bangkok",
                       calendar: "gregory",
                     })}
                     {req.reason && ` — ${req.reason}`}

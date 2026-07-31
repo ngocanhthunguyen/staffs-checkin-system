@@ -28,6 +28,7 @@ export function LeaveReview({ request }: { request: LeaveRequest }) {
           <p className="mt-1 text-sm text-slate-600">
             {typeLabel} · {th.leaveDaysLabel(request.days)} ·{" "}
             {new Date(request.start_date).toLocaleDateString("th-TH", {
+              timeZone: "Asia/Bangkok",
               calendar: "gregory",
             })}
           </p>

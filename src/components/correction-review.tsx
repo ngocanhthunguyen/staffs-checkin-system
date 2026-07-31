@@ -38,6 +38,7 @@ export function CorrectionReview({ request }: { request: CorrectionRequest }) {
             <p className="font-medium text-slate-700">{th.currentCheckIn}</p>
             <p>
               {new Date(attendance.check_in_at).toLocaleString("th-TH", {
+                timeZone: "Asia/Bangkok",
                 calendar: "gregory",
               })}
             </p>
@@ -47,6 +48,7 @@ export function CorrectionReview({ request }: { request: CorrectionRequest }) {
             <p>
               {attendance.check_out_at
                 ? new Date(attendance.check_out_at).toLocaleString("th-TH", {
+                    timeZone: "Asia/Bangkok",
                     calendar: "gregory",
                   })
                 : "—"}
@@ -57,6 +59,7 @@ export function CorrectionReview({ request }: { request: CorrectionRequest }) {
               <p className="font-medium text-green-800">{th.requestedCheckIn}</p>
               <p>
                 {new Date(request.requested_check_in).toLocaleString("th-TH", {
+                  timeZone: "Asia/Bangkok",
                   calendar: "gregory",
                 })}
               </p>
@@ -67,6 +70,7 @@ export function CorrectionReview({ request }: { request: CorrectionRequest }) {
               <p className="font-medium text-green-800">{th.requestedCheckOut}</p>
               <p>
                 {new Date(request.requested_check_out).toLocaleString("th-TH", {
+                  timeZone: "Asia/Bangkok",
                   calendar: "gregory",
                 })}
               </p>

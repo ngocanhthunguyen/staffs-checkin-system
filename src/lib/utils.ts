@@ -1,4 +1,5 @@
 import type { Site } from "@/types/database";
+import { APP_TIMEZONE } from "@/lib/timezone";
 
 const EARTH_RADIUS_M = 6371000;
 
@@ -38,22 +39,33 @@ export function formatDuration(ms: number): string {
   return `${hours} ชม. ${minutes} นาที / ${hours}h ${minutes}m`;
 }
 
+// All formatting below is pinned to Asia/Bangkok explicitly. Vercel's
+// serverless functions always run in UTC, so relying on the JS runtime's
+// "local" time (getHours(), unqualified toLocaleDateString, etc.) would
+// show times 7 hours off from actual Thai time in production. See
+// src/lib/timezone.ts for details.
+
 export function formatTime(dateStr: string): string {
   const d = new Date(dateStr);
-  const hours = String(d.getHours()).padStart(2, "0");
-  const minutes = String(d.getMinutes()).padStart(2, "0");
-  return `${hours}:${minutes}`;
+  return d.toLocaleTimeString("en-GB", {
+    timeZone: APP_TIMEZONE,
+    hour: "2-digit",
+    minute: "2-digit",
+    hour12: false,
+  });
 }
 
 /** Clear bilingual date: 28 Jul 2026 / 28 กรกฎาคม 2026 */
 export function formatDate(dateStr: string): string {
   const d = new Date(dateStr);
   const en = d.toLocaleDateString("en-AU", {
+    timeZone: APP_TIMEZONE,
     day: "numeric",
     month: "short",
     year: "numeric",
   });
   const thai = d.toLocaleDateString("th-TH", {
+    timeZone: APP_TIMEZONE,
     day: "numeric",
     month: "long",
     year: "numeric",
@@ -67,12 +79,14 @@ export function formatDate(dateStr: string): string {
 /** Today header on check-in page */
 export function formatTodayHeader(date: Date = new Date()): string {
   const en = date.toLocaleDateString("en-AU", {
+    timeZone: APP_TIMEZONE,
     weekday: "long",
     day: "numeric",
     month: "long",
     year: "numeric",
   });
   const thai = date.toLocaleDateString("th-TH", {
+    timeZone: APP_TIMEZONE,
     weekday: "long",
     day: "numeric",
     month: "long",

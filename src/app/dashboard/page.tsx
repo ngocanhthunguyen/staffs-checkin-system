@@ -4,6 +4,7 @@ import { AppShell } from "@/components/app-shell";
 import { formatTime, getHoursBetween } from "@/lib/utils";
 import { th } from "@/lib/i18n";
 import { attachSignedPhotoUrls } from "@/lib/photos";
+import { startOfBangkokDay } from "@/lib/timezone";
 import type { Attendance, Profile } from "@/types/database";
 import { Users, UserCheck, UserX, ImageOff } from "lucide-react";
 
@@ -25,8 +26,9 @@ export default async function DashboardPage() {
     redirect("/");
   }
 
-  const todayStart = new Date();
-  todayStart.setHours(0, 0, 0, 0);
+  // Anchored to the Bangkok calendar day, not the server's own clock
+  // (Vercel serverless functions run in UTC) — see src/lib/timezone.ts.
+  const todayStart = startOfBangkokDay(new Date());
 
   // Admins don't check in/out, so they're excluded from this roster entirely
   // (otherwise they'd permanently show up as "Absent", which is confusing).
@@ -64,6 +66,7 @@ export default async function DashboardPage() {
           <h1 className="text-xl font-bold">{th.todayDashboard}</h1>
           <p className="text-sm text-slate-500">
             {new Date().toLocaleDateString("th-TH", {
+              timeZone: "Asia/Bangkok",
               weekday: "long",
               month: "long",
               day: "numeric",

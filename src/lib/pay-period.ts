@@ -1,7 +1,9 @@
+import { bangkokDate, endOfBangkokDay, getBangkokParts, startOfBangkokDay } from "@/lib/timezone";
+
 export type PayPeriodType = "monthly" | "fortnight";
 
 /** First day of a fortnightly pay cycle (adjust in Supabase/settings later if needed) */
-const FORTNIGHT_ANCHOR = new Date(2024, 0, 1); // 1 Jan 2024
+const FORTNIGHT_ANCHOR = bangkokDate(2024, 1, 1); // 1 Jan 2024, Bangkok time
 
 export interface PayPeriod {
   type: PayPeriodType;
@@ -11,23 +13,22 @@ export interface PayPeriod {
   key: string;
 }
 
-function startOfDay(d: Date): Date {
-  const x = new Date(d);
-  x.setHours(0, 0, 0, 0);
-  return x;
-}
-
-function endOfDay(d: Date): Date {
-  const x = new Date(d);
-  x.setHours(23, 59, 59, 999);
-  return x;
-}
+// Day boundaries below are all anchored to the Bangkok calendar day, not
+// the server's own clock (see src/lib/timezone.ts).
+const startOfDay = startOfBangkokDay;
+const endOfDay = endOfBangkokDay;
 
 function formatPeriodLabel(start: Date, end: Date): string {
   const en = (d: Date) =>
-    d.toLocaleDateString("en-AU", { day: "numeric", month: "short", year: "numeric" });
+    d.toLocaleDateString("en-AU", {
+      timeZone: "Asia/Bangkok",
+      day: "numeric",
+      month: "short",
+      year: "numeric",
+    });
   const thai = (d: Date) =>
     d.toLocaleDateString("th-TH", {
+      timeZone: "Asia/Bangkok",
       day: "numeric",
       month: "long",
       year: "numeric",
@@ -37,15 +38,23 @@ function formatPeriodLabel(start: Date, end: Date): string {
 }
 
 export function getMonthlyPeriod(year: number, month: number): PayPeriod {
-  const start = startOfDay(new Date(year, month - 1, 1));
-  const end = endOfDay(new Date(year, month, 0));
+  const start = bangkokDate(year, month, 1);
+  // `bangkokDate(year, month + 1, 0)` is "day 0 of next month", i.e. the
+  // last day of `month` (Date.UTC normalizes the day-0 rollback for us).
+  const end = endOfBangkokDay(bangkokDate(year, month + 1, 0));
   return {
     type: "monthly",
     start,
     end,
-    label: start.toLocaleDateString("en-AU", { month: "long", year: "numeric" }) +
+    label:
+      start.toLocaleDateString("en-AU", {
+        timeZone: "Asia/Bangkok",
+        month: "long",
+        year: "numeric",
+      }) +
       " / " +
       start.toLocaleDateString("th-TH", {
+        timeZone: "Asia/Bangkok",
         month: "long",
         year: "numeric",
         calendar: "gregory",
@@ -61,7 +70,8 @@ export function getFortnightContaining(date: Date): PayPeriod {
   const index = Math.floor((target.getTime() - anchor.getTime()) / msPerFortnight);
   const start = new Date(anchor.getTime() + index * msPerFortnight);
   const end = endOfDay(new Date(start.getTime() + 13 * 24 * 60 * 60 * 1000));
-  const key = start.toISOString().slice(0, 10);
+  const { year, month, day } = getBangkokParts(start);
+  const key = `${year}-${String(month).padStart(2, "0")}-${String(day).padStart(2, "0")}`;
   return {
     type: "fortnight",
     start,
@@ -73,7 +83,7 @@ export function getFortnightContaining(date: Date): PayPeriod {
 
 export function getFortnightByStart(startStr: string): PayPeriod {
   const [y, m, d] = startStr.split("-").map(Number);
-  const start = startOfDay(new Date(y, m - 1, d));
+  const start = bangkokDate(y, m, d);
   const end = endOfDay(new Date(start.getTime() + 13 * 24 * 60 * 60 * 1000));
   return {
     type: "fortnight",
@@ -92,12 +102,13 @@ export function listRecentFortnights(count = 8): PayPeriod[] {
   for (let i = 0; i < count; i++) {
     const start = new Date(current.start.getTime() - i * msPerFortnight);
     const end = endOfDay(new Date(start.getTime() + 13 * 24 * 60 * 60 * 1000));
+    const { year, month, day } = getBangkokParts(start);
     periods.push({
       type: "fortnight",
       start,
       end,
       label: formatPeriodLabel(start, end),
-      key: start.toISOString().slice(0, 10),
+      key: `${year}-${String(month).padStart(2, "0")}-${String(day).padStart(2, "0")}`,
     });
   }
 
@@ -115,7 +126,8 @@ export function resolvePayPeriod(
     return getFortnightContaining(now);
   }
 
-  const [year, month] = (params.month ?? `${now.getFullYear()}-${now.getMonth() + 1}`)
+  const nowParts = getBangkokParts(now);
+  const [year, month] = (params.month ?? `${nowParts.year}-${nowParts.month}`)
     .split("-")
     .map(Number);
   return getMonthlyPeriod(year, month);

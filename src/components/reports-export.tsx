@@ -22,8 +22,8 @@ export function ReportsExport({
     const lines = [
       `${COMPANY_NAME} - Payroll Export / ส่งออกเงินเดือน`,
       `Pay Period / รอบจ่ายเงิน:,${periodLabel}`,
-      `From / ตั้งแต่:,${period.start.toLocaleDateString("th-TH", { calendar: "gregory" })}`,
-      `To / ถึง:,${period.end.toLocaleDateString("th-TH", { calendar: "gregory" })}`,
+      `From / ตั้งแต่:,${period.start.toLocaleDateString("th-TH", { timeZone: "Asia/Bangkok", calendar: "gregory" })}`,
+      `To / ถึง:,${period.end.toLocaleDateString("th-TH", { timeZone: "Asia/Bangkok", calendar: "gregory" })}`,
       `Total Payable Hours / ชั่วโมงจ่ายเงินรวม:,${totalHours.toFixed(2)}`,
       `Total Overtime Hours / ชั่วโมงล่วงเวลารวม:,${totalOvertime.toFixed(2)}`,
       "",
@@ -46,7 +46,7 @@ export function ReportsExport({
         const status = checkOut
           ? "Complete / เสร็จสิ้น"
           : "Incomplete / ไม่ครบ (not paid)";
-        return `"${checkIn.toLocaleDateString("th-TH", { calendar: "gregory" })}","${(r as Attendance & { profiles?: { full_name: string } }).profiles?.full_name ?? ""}","${checkIn.toLocaleTimeString("th-TH")}","${checkOut?.toLocaleTimeString("th-TH") ?? ""}",${hours.toFixed(2)},"${status}"`;
+        return `"${checkIn.toLocaleDateString("th-TH", { timeZone: "Asia/Bangkok", calendar: "gregory" })}","${(r as Attendance & { profiles?: { full_name: string } }).profiles?.full_name ?? ""}","${checkIn.toLocaleTimeString("th-TH", { timeZone: "Asia/Bangkok" })}","${checkOut ? checkOut.toLocaleTimeString("th-TH", { timeZone: "Asia/Bangkok" }) : ""}",${hours.toFixed(2)},"${status}"`;
       }),
     ];
 

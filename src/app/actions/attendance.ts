@@ -4,6 +4,7 @@ import { revalidatePath } from "next/cache";
 import { createClient } from "@/lib/supabase/server";
 import { th } from "@/lib/i18n";
 import { isWithinGeofence, distanceInMeters } from "@/lib/utils";
+import { parseBangkokLocalDateTime } from "@/lib/timezone";
 import type { Site } from "@/types/database";
 
 type SupabaseServerClient = Awaited<ReturnType<typeof createClient>>;
@@ -138,8 +139,16 @@ export async function requestCorrection(formData: FormData) {
 
   const attendanceId = formData.get("attendance_id") as string;
   const reason = formData.get("reason") as string;
-  const requestedCheckIn = formData.get("requested_check_in") as string;
-  const requestedCheckOut = formData.get("requested_check_out") as string;
+  // <input type="datetime-local"> submits a naive "YYYY-MM-DDTHH:mm" string
+  // with no timezone info — staff are picking a time on the Thai wall
+  // clock, so it must be parsed as Bangkok time, not left for Postgres to
+  // default to UTC (which would silently shift it by 7 hours).
+  const requestedCheckIn = parseBangkokLocalDateTime(
+    formData.get("requested_check_in") as string
+  );
+  const requestedCheckOut = parseBangkokLocalDateTime(
+    formData.get("requested_check_out") as string
+  );
 
   if (!attendanceId || !reason?.trim()) {
     return { error: th.attendanceReasonRequired };
@@ -149,8 +158,8 @@ export async function requestCorrection(formData: FormData) {
     attendance_id: attendanceId,
     requested_by: user.id,
     reason: reason.trim(),
-    requested_check_in: requestedCheckIn || null,
-    requested_check_out: requestedCheckOut || null,
+    requested_check_in: requestedCheckIn,
+    requested_check_out: requestedCheckOut,
   });
 
   if (error) return { error: error.message };

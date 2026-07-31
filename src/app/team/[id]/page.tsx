@@ -8,6 +8,7 @@ import { calculateLeaveBalances } from "@/lib/leave";
 import { buildPayrollSummary, getMonthlyPeriod } from "@/lib/pay-period";
 import { employmentLabel, roleLabel, statusLabel, th } from "@/lib/i18n";
 import { formatDate, formatTime, getHoursBetween } from "@/lib/utils";
+import { getBangkokParts } from "@/lib/timezone";
 import type { Profile } from "@/types/database";
 
 export default async function StaffDetailPage({
@@ -41,8 +42,9 @@ export default async function StaffDetailPage({
 
   if (!staffMember) notFound();
 
-  const now = new Date();
-  const period = getMonthlyPeriod(now.getFullYear(), now.getMonth() + 1);
+  // Bangkok's "today", not the server's own UTC clock — see lib/timezone.ts.
+  const todayParts = getBangkokParts(new Date());
+  const period = getMonthlyPeriod(todayParts.year, todayParts.month);
 
   const { data: monthRecords } = await supabase
     .from("attendance")
@@ -233,6 +235,7 @@ export default async function StaffDetailPage({
                   </div>
                   <p className="mt-1 text-xs text-slate-500">
                     {new Date(req.start_date).toLocaleDateString("th-TH", {
+                      timeZone: "Asia/Bangkok",
                       calendar: "gregory",
                     })}
                     {req.reason && ` — ${req.reason}`}

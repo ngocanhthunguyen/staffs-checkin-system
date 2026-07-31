@@ -13,6 +13,7 @@ import {
 } from "@/lib/pay-period";
 import type { Attendance, Profile } from "@/types/database";
 import { ReportsExport } from "@/components/reports-export";
+import { getBangkokParts } from "@/lib/timezone";
 import { AlertTriangle } from "lucide-react";
 
 export default async function ReportsPage({
@@ -38,10 +39,11 @@ export default async function ReportsPage({
   }
 
   const params = await searchParams;
-  const now = new Date();
   const type: PayPeriodType =
     params.type === "fortnight" ? "fortnight" : "monthly";
-  const defaultMonth = `${now.getFullYear()}-${String(now.getMonth() + 1).padStart(2, "0")}`;
+  // Bangkok's "today", not the server's own UTC clock — see lib/timezone.ts.
+  const todayParts = getBangkokParts(new Date());
+  const defaultMonth = `${todayParts.year}-${String(todayParts.month).padStart(2, "0")}`;
   const period = resolvePayPeriod(type, {
     month: params.month ?? defaultMonth,
     start: params.start,
