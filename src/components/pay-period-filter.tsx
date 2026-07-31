@@ -49,12 +49,12 @@ export function PayPeriodFilter({
             type="month"
             name="month"
             defaultValue={month}
-            className="flex-1 rounded-xl border border-slate-300 px-3 py-2 text-sm"
+            className="min-w-0 flex-1 rounded-xl border border-slate-300 px-3 py-2 text-sm"
           />
           <input type="hidden" name="type" value="monthly" />
           <button
             type="submit"
-            className="rounded-xl bg-blue-600 px-4 py-2 text-sm font-medium text-white hover:bg-blue-700"
+            className="shrink-0 rounded-xl bg-blue-600 px-4 py-2 text-sm font-medium text-white hover:bg-blue-700"
           >
             {th.go}
           </button>
@@ -64,7 +64,7 @@ export function PayPeriodFilter({
           <select
             name="start"
             defaultValue={fortnightStart}
-            className="flex-1 rounded-xl border border-slate-300 px-3 py-2 text-sm"
+            className="min-w-0 flex-1 truncate rounded-xl border border-slate-300 px-3 py-2 text-sm"
           >
             {fortnightOptions.map((opt) => (
               <option key={opt.key} value={opt.key}>
@@ -75,7 +75,7 @@ export function PayPeriodFilter({
           <input type="hidden" name="type" value="fortnight" />
           <button
             type="submit"
-            className="rounded-xl bg-blue-600 px-4 py-2 text-sm font-medium text-white hover:bg-blue-700"
+            className="shrink-0 rounded-xl bg-blue-600 px-4 py-2 text-sm font-medium text-white hover:bg-blue-700"
           >
             {th.go}
           </button>

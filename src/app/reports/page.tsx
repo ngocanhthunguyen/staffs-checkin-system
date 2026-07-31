@@ -51,7 +51,7 @@ export default async function ReportsPage({
 
   const fortnightOptions = listRecentFortnights(12).map((p) => ({
     key: p.key,
-    label: p.label,
+    label: p.shortLabel,
   }));
   const currentFortnightKey = getFortnightContaining(new Date()).key;
 

@@ -10,6 +10,8 @@ export interface PayPeriod {
   start: Date;
   end: Date;
   label: string;
+  /** Compact English-only label for tight spaces like a `<select>`. */
+  shortLabel: string;
   key: string;
 }
 
@@ -37,6 +39,21 @@ function formatPeriodLabel(start: Date, end: Date): string {
   return `${en(start)} – ${en(end)} / ${thai(start)} – ${thai(end)}`;
 }
 
+/** Short "27 Jul – 9 Aug 2026" style label — year shown once, English only. */
+function formatShortPeriodLabel(start: Date, end: Date): string {
+  const startParts = getBangkokParts(start);
+  const endParts = getBangkokParts(end);
+  const sameYear = startParts.year === endParts.year;
+  const fmt = (d: Date, withYear: boolean) =>
+    d.toLocaleDateString("en-AU", {
+      timeZone: "Asia/Bangkok",
+      day: "numeric",
+      month: "short",
+      year: withYear ? "numeric" : undefined,
+    });
+  return `${fmt(start, !sameYear)} – ${fmt(end, true)}`;
+}
+
 export function getMonthlyPeriod(year: number, month: number): PayPeriod {
   const start = bangkokDate(year, month, 1);
   // `bangkokDate(year, month + 1, 0)` is "day 0 of next month", i.e. the
@@ -59,6 +76,11 @@ export function getMonthlyPeriod(year: number, month: number): PayPeriod {
         year: "numeric",
         calendar: "gregory",
       }),
+    shortLabel: start.toLocaleDateString("en-AU", {
+      timeZone: "Asia/Bangkok",
+      month: "long",
+      year: "numeric",
+    }),
     key: `${year}-${String(month).padStart(2, "0")}`,
   };
 }
@@ -77,6 +99,7 @@ export function getFortnightContaining(date: Date): PayPeriod {
     start,
     end,
     label: formatPeriodLabel(start, end),
+    shortLabel: formatShortPeriodLabel(start, end),
     key,
   };
 }
@@ -90,6 +113,7 @@ export function getFortnightByStart(startStr: string): PayPeriod {
     start,
     end,
     label: formatPeriodLabel(start, end),
+    shortLabel: formatShortPeriodLabel(start, end),
     key: startStr,
   };
 }
@@ -108,6 +132,7 @@ export function listRecentFortnights(count = 8): PayPeriod[] {
       start,
       end,
       label: formatPeriodLabel(start, end),
+      shortLabel: formatShortPeriodLabel(start, end),
       key: `${year}-${String(month).padStart(2, "0")}-${String(day).padStart(2, "0")}`,
     });
   }
