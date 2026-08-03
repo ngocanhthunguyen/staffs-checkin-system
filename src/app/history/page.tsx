@@ -3,7 +3,7 @@ import { createClient } from "@/lib/supabase/server";
 import { AppShell } from "@/components/app-shell";
 import { formatDate, formatTime, getHoursBetween } from "@/lib/utils";
 import { th } from "@/lib/i18n";
-import { getFortnightContaining } from "@/lib/pay-period";
+import { getFortnightContaining, getShiftHourSplit } from "@/lib/pay-period";
 import type { Profile } from "@/types/database";
 
 export default async function HistoryPage() {
@@ -93,6 +93,19 @@ export default async function HistoryPage() {
                     ? `${getHoursBetween(record.check_in_at, record.check_out_at).toFixed(1)} ${th.hours}`
                     : th.incompleteShifts}
                 </p>
+                {record.check_out_at && (() => {
+                  const split = getShiftHourSplit(record);
+                  if (!split) return null;
+                  return (
+                    <p className="text-xs text-slate-500">
+                      {th.normalHoursShort} {split.normal.toFixed(1)} {th.hours}
+                      {" · "}
+                      <span className="text-purple-600">
+                        {th.otHoursShort} {split.overtime.toFixed(1)} {th.hours}
+                      </span>
+                    </p>
+                  );
+                })()}
               </div>
             ))
           )}

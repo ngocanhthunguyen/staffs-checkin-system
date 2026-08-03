@@ -91,7 +91,13 @@ export async function checkIn(lat?: number, lng?: number, photoDataUrl?: string)
   return { success: true };
 }
 
-export async function checkOut(lat?: number, lng?: number, photoDataUrl?: string) {
+export async function checkOut(
+  lat?: number,
+  lng?: number,
+  photoDataUrl?: string,
+  normalHours?: number,
+  overtimeHours?: number
+) {
   if (!photoDataUrl) return { error: th.photoRequired };
 
   const supabase = await createClient();
@@ -103,22 +109,42 @@ export async function checkOut(lat?: number, lng?: number, photoDataUrl?: string
 
   const { data: openSession } = await supabase
     .from("attendance")
-    .select("id")
+    .select("id, check_in_at")
     .eq("staff_id", user.id)
     .is("check_out_at", null)
     .maybeSingle();
 
   if (!openSession) return { error: th.notCheckedIn };
 
+  const checkOutAt = new Date();
+  const totalHours = Math.max(
+    0,
+    (checkOutAt.getTime() - new Date(openSession.check_in_at).getTime()) / 3600000
+  );
+
+  const normal = Number(normalHours);
+  const ot = Number(overtimeHours);
+
+  if (!Number.isFinite(normal) || !Number.isFinite(ot) || normal < 0 || ot < 0) {
+    return { error: th.hoursMustMatch };
+  }
+
+  // Allow a small rounding tolerance (0.05 hrs ≈ 3 minutes).
+  if (Math.abs(normal + ot - totalHours) > 0.05) {
+    return { error: th.hoursMustMatch };
+  }
+
   const photoPath = await uploadCheckPhoto(supabase, user.id, photoDataUrl, "out");
 
   const { error } = await supabase
     .from("attendance")
     .update({
-      check_out_at: new Date().toISOString(),
+      check_out_at: checkOutAt.toISOString(),
       check_out_lat: lat ?? null,
       check_out_lng: lng ?? null,
       check_out_photo_path: photoPath,
+      normal_hours: Math.round(normal * 100) / 100,
+      overtime_hours: Math.round(ot * 100) / 100,
     })
     .eq("id", openSession.id);
 
@@ -126,6 +152,8 @@ export async function checkOut(lat?: number, lng?: number, photoDataUrl?: string
 
   revalidatePath("/");
   revalidatePath("/dashboard");
+  revalidatePath("/reports");
+  revalidatePath("/history");
   return { success: true };
 }
 

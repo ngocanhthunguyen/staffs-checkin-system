@@ -3,7 +3,7 @@
 import { Download } from "lucide-react";
 import { COMPANY_NAME, employmentLabel, th } from "@/lib/i18n";
 import type { Attendance } from "@/types/database";
-import type { PayPeriod, PayrollSummaryRow } from "@/lib/pay-period";
+import { getShiftHourSplit, type PayPeriod, type PayrollSummaryRow } from "@/lib/pay-period";
 
 export function ReportsExport({
   period,
@@ -36,17 +36,15 @@ export function ReportsExport({
         return `"${s.name}","${s.department ?? ""}","${employmentLabel(s.employmentType)}","${payBasis}",${s.daysWorked},${s.regularHours.toFixed(2)},${s.overtimeHours.toFixed(2)},${s.totalHours.toFixed(2)},${s.incompleteShifts}`;
       }),
       "",
-      "วันที่ / Date,พนักงาน / Staff,เข้างาน / Check In,ออกงาน / Check Out,ชั่วโมง / Hours,สถานะ / Status",
+      "วันที่ / Date,พนักงาน / Staff,เข้างาน / Check In,ออกงาน / Check Out,ชั่วโมงปกติ / Normal Hours,ชั่วโมง OT / Overtime Hours,ชั่วโมงรวม / Total Hours,สถานะ / Status",
       ...records.map((r) => {
         const checkIn = new Date(r.check_in_at);
         const checkOut = r.check_out_at ? new Date(r.check_out_at) : null;
-        const hours = checkOut
-          ? (checkOut.getTime() - checkIn.getTime()) / 3600000
-          : 0;
+        const split = getShiftHourSplit(r);
         const status = checkOut
           ? "Complete / เสร็จสิ้น"
           : "Incomplete / ไม่ครบ (not paid)";
-        return `"${checkIn.toLocaleDateString("th-TH", { timeZone: "Asia/Bangkok", calendar: "gregory" })}","${(r as Attendance & { profiles?: { full_name: string } }).profiles?.full_name ?? ""}","${checkIn.toLocaleTimeString("th-TH", { timeZone: "Asia/Bangkok" })}","${checkOut ? checkOut.toLocaleTimeString("th-TH", { timeZone: "Asia/Bangkok" }) : ""}",${hours.toFixed(2)},"${status}"`;
+        return `"${checkIn.toLocaleDateString("th-TH", { timeZone: "Asia/Bangkok", calendar: "gregory" })}","${(r as Attendance & { profiles?: { full_name: string } }).profiles?.full_name ?? ""}","${checkIn.toLocaleTimeString("th-TH", { timeZone: "Asia/Bangkok" })}","${checkOut ? checkOut.toLocaleTimeString("th-TH", { timeZone: "Asia/Bangkok" }) : ""}",${split ? split.normal.toFixed(2) : ""},${split ? split.overtime.toFixed(2) : ""},${split ? split.total.toFixed(2) : "0.00"},"${status}"`;
       }),
     ];
 

@@ -6,9 +6,9 @@ import { AppShell } from "@/components/app-shell";
 import { StaffEmploymentForm } from "@/components/staff-employment-form";
 import { StaffRoleForm } from "@/components/staff-role-form";
 import { calculateLeaveBalances } from "@/lib/leave";
-import { buildPayrollSummary, getMonthlyPeriod } from "@/lib/pay-period";
+import { buildPayrollSummary, getMonthlyPeriod, getShiftHourSplit } from "@/lib/pay-period";
 import { employmentLabel, roleLabel, statusLabel, th } from "@/lib/i18n";
-import { formatDate, formatTime, getHoursBetween } from "@/lib/utils";
+import { formatDate, formatTime } from "@/lib/utils";
 import { getBangkokParts } from "@/lib/timezone";
 import type { Profile } from "@/types/database";
 
@@ -165,9 +165,7 @@ export default async function StaffDetailPage({
             ) : (
               attendanceHistory.map((record) => {
                 const complete = !!record.check_out_at;
-                const hours = complete
-                  ? getHoursBetween(record.check_in_at, record.check_out_at)
-                  : 0;
+                const split = getShiftHourSplit(record);
                 return (
                   <div
                     key={record.id}
@@ -182,9 +180,20 @@ export default async function StaffDetailPage({
                     </p>
                     <p className="text-xs text-slate-500">
                       {formatTime(record.check_in_at)} →{" "}
-                      {record.check_out_at ? formatTime(record.check_out_at) : th.stillIn} ·{" "}
-                      {complete ? `${hours.toFixed(1)} ${th.hours}` : th.incompleteShifts}
+                      {record.check_out_at ? formatTime(record.check_out_at) : th.stillIn}
+                      {complete && split
+                        ? ` · ${split.total.toFixed(1)} ${th.hours}`
+                        : ` · ${th.incompleteShifts}`}
                     </p>
+                    {complete && split && (
+                      <p className="text-xs text-slate-500">
+                        {th.normalHoursShort} {split.normal.toFixed(1)} {th.hours}
+                        {" · "}
+                        <span className="text-purple-600">
+                          {th.otHoursShort} {split.overtime.toFixed(1)} {th.hours}
+                        </span>
+                      </p>
+                    )}
                   </div>
                 );
               })

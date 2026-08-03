@@ -5,6 +5,7 @@ import { formatTime, getHoursBetween } from "@/lib/utils";
 import { th } from "@/lib/i18n";
 import { attachSignedPhotoUrls } from "@/lib/photos";
 import { startOfBangkokDay } from "@/lib/timezone";
+import { getShiftHourSplit } from "@/lib/pay-period";
 import type { Attendance, Profile } from "@/types/database";
 import { Users, UserCheck, UserX, ImageOff } from "lucide-react";
 
@@ -174,6 +175,7 @@ type AttendanceRow = Omit<Attendance, "profiles"> & {
 
 function StaffRow({ record, status }: { record: AttendanceRow; status: "in" | "out" }) {
   const hours = getHoursBetween(record.check_in_at, record.check_out_at);
+  const split = status === "out" ? getShiftHourSplit(record) : null;
   const photoUrl = status === "in" ? record.checkInPhotoUrl : record.checkOutPhotoUrl;
 
   return (
@@ -199,6 +201,15 @@ function StaffRow({ record, status }: { record: AttendanceRow; status: "in" | "o
           {" · "}
           {hours.toFixed(1)} {th.hours}
         </p>
+        {split && (
+          <p className="text-xs text-slate-500">
+            {th.normalHoursShort} {split.normal.toFixed(1)}
+            {" · "}
+            <span className="text-purple-600">
+              {th.otHoursShort} {split.overtime.toFixed(1)}
+            </span>
+          </p>
+        )}
       </div>
 
       <span

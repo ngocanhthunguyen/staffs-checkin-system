@@ -2,15 +2,16 @@ import { redirect } from "next/navigation";
 import { createClient } from "@/lib/supabase/server";
 import { AppShell } from "@/components/app-shell";
 import { PayPeriodFilter } from "@/components/pay-period-filter";
-import { formatDate, formatTime, getHoursBetween } from "@/lib/utils";
-import { employmentLabel, th } from "@/lib/i18n";
 import {
   buildPayrollSummary,
   getFortnightContaining,
+  getShiftHourSplit,
   listRecentFortnights,
   resolvePayPeriod,
   type PayPeriodType,
 } from "@/lib/pay-period";
+import { formatDate, formatTime } from "@/lib/utils";
+import { employmentLabel, th } from "@/lib/i18n";
 import type { Attendance, Profile } from "@/types/database";
 import { ReportsExport } from "@/components/reports-export";
 import { getBangkokParts } from "@/lib/timezone";
@@ -177,11 +178,11 @@ export default async function ReportsPage({
                         </p>
                       </>
                     )}
-                    {data.overtimeHours > 0 && (
-                      <p className="text-xs font-medium text-purple-600">
-                        +{data.overtimeHours.toFixed(1)} {th.hours} OT
-                      </p>
-                    )}
+                    <p className="text-xs text-slate-500">
+                      {th.normalHoursShort} {data.regularHours.toFixed(1)}
+                      {" · "}
+                      {th.otHoursShort} {data.overtimeHours.toFixed(1)}
+                    </p>
                   </div>
                 </div>
               ))
@@ -196,9 +197,7 @@ export default async function ReportsPage({
           <div className="space-y-2">
             {(records ?? []).map((record) => {
               const complete = !!record.check_out_at;
-              const hours = complete
-                ? getHoursBetween(record.check_in_at, record.check_out_at)
-                : 0;
+              const split = getShiftHourSplit(record);
 
               return (
                 <div
@@ -217,9 +216,20 @@ export default async function ReportsPage({
                 </p>
                 <p className="text-xs text-slate-500">
                     {formatTime(record.check_in_at)} →{" "}
-                    {record.check_out_at ? formatTime(record.check_out_at) : th.stillIn} ·{" "}
-                    {complete ? `${hours.toFixed(1)} ${th.hours}` : th.incompleteShifts}
+                    {record.check_out_at ? formatTime(record.check_out_at) : th.stillIn}
+                    {complete && split
+                      ? ` · ${split.total.toFixed(1)} ${th.hours}`
+                      : ` · ${th.incompleteShifts}`}
                   </p>
+                  {complete && split && (
+                    <p className="text-xs text-slate-500">
+                      {th.normalHoursShort} {split.normal.toFixed(1)} {th.hours}
+                      {" · "}
+                      <span className="text-purple-600">
+                        {th.otHoursShort} {split.overtime.toFixed(1)} {th.hours}
+                      </span>
+                    </p>
+                  )}
                 </div>
               );
             })}

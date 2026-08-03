@@ -40,6 +40,10 @@ export interface Attendance {
   check_out_lng: number | null;
   check_in_photo_path: string | null;
   check_out_photo_path: string | null;
+  /** Declared at check-out. Null while open or on legacy records. */
+  normal_hours: number | null;
+  /** Declared at check-out. Null while open or on legacy records. */
+  overtime_hours: number | null;
   notes: string | null;
   created_at: string;
   profiles?: Profile;

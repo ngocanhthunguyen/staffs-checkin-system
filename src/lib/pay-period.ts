@@ -158,8 +158,8 @@ export function resolvePayPeriod(
   return getMonthlyPeriod(year, month);
 }
 
-/** Hours beyond this threshold per shift count as overtime. */
-const OVERTIME_THRESHOLD_HOURS = 8;
+/** Legacy fallback only: hours beyond this per shift counted as OT before staff-declared split existed. */
+const LEGACY_OVERTIME_THRESHOLD_HOURS = 8;
 
 export interface PayrollSummaryRow {
   id: string;
@@ -178,10 +178,43 @@ export interface AttendanceForPayroll {
   staff_id: string;
   check_in_at: string;
   check_out_at: string | null;
+  normal_hours?: number | null;
+  overtime_hours?: number | null;
   profiles?: {
     full_name: string;
     department: string | null;
     employment_type?: "full_time" | "part_time" | null;
+  };
+}
+
+/** Prefer staff-declared Normal/OT; fall back for legacy rows that predate the split. */
+export function getShiftHourSplit(record: {
+  check_in_at: string;
+  check_out_at: string | null;
+  normal_hours?: number | null;
+  overtime_hours?: number | null;
+}): { total: number; normal: number; overtime: number } | null {
+  if (!record.check_out_at) return null;
+
+  const total = Math.max(
+    0,
+    (new Date(record.check_out_at).getTime() - new Date(record.check_in_at).getTime()) /
+      3600000
+  );
+
+  if (record.normal_hours != null && record.overtime_hours != null) {
+    return {
+      total,
+      normal: Number(record.normal_hours),
+      overtime: Number(record.overtime_hours),
+    };
+  }
+
+  // Legacy records: keep the old auto 8-hour split so existing payroll isn't wiped.
+  return {
+    total,
+    normal: Math.min(total, LEGACY_OVERTIME_THRESHOLD_HOURS),
+    overtime: Math.max(0, total - LEGACY_OVERTIME_THRESHOLD_HOURS),
   };
 }
 
@@ -214,15 +247,11 @@ export function buildPayrollSummary(
       continue;
     }
 
-    const hours = Math.max(
-      0,
-      (new Date(record.check_out_at).getTime() - new Date(record.check_in_at).getTime()) /
-        3600000
-    );
+    const split = getShiftHourSplit(record)!;
     row.daysWorked += 1;
-    row.totalHours += hours;
-    row.regularHours += Math.min(hours, OVERTIME_THRESHOLD_HOURS);
-    row.overtimeHours += Math.max(0, hours - OVERTIME_THRESHOLD_HOURS);
+    row.totalHours += split.total;
+    row.regularHours += split.normal;
+    row.overtimeHours += split.overtime;
     byStaff.set(record.staff_id, row);
   }
 

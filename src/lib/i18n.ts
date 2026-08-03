@@ -223,12 +223,26 @@ export const th = {
   leaveBalanceNotSet: bi("ยังไม่กำหนด", "Not set"),
 
   // Reports / overtime
-  regularHours: bi("ชั่วโมงปกติ", "Regular hours"),
+  regularHours: bi("ชั่วโมงปกติ", "Normal hours"),
   overtimeHours: bi("ชั่วโมงล่วงเวลา (OT)", "Overtime (OT) hours"),
   overtimeHint: bi(
-    "ชั่วโมงเกิน 8 ชม./วัน นับเป็นล่วงเวลา",
-    "Hours beyond 8/day count as overtime"
+    "ชั่วโมงปกติและ OT แยกตามที่พนักงานระบุตอนออกงาน",
+    "Normal and OT hours are recorded separately by staff at check-out"
   ),
+  splitHoursTitle: bi("แยกชั่วโมงทำงาน", "Split today's hours"),
+  splitHoursHint: bi(
+    "กรุณาระบุชั่วโมงปกติและ OT ให้รวมเท่ากับเวลาที่ทำงานวันนี้",
+    "Enter Normal and OT hours so they add up to the time worked today"
+  ),
+  allNormal: bi("ปกติทั้งหมด", "All normal"),
+  allOvertime: bi("OT ทั้งหมด", "All OT"),
+  hoursMustMatch: bi(
+    "ชั่วโมงปกติ + OT ต้องเท่ากับเวลาที่ทำงาน",
+    "Normal + OT must equal the time worked"
+  ),
+  totalWorked: bi("เวลาที่ทำงาน", "Time worked"),
+  normalHoursShort: bi("ปกติ", "Normal"),
+  otHoursShort: bi("OT", "OT"),
 
   // Staff profile detail
   staffProfile: bi("ข้อมูลพนักงาน", "Staff Profile"),

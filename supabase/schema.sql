@@ -52,6 +52,10 @@ create table public.attendance (
   check_out_lng double precision,
   check_in_photo_path text,
   check_out_photo_path text,
+  -- Declared by staff at check-out as two separate values (not auto-split).
+  -- Null while the shift is still open, or for legacy records before this column existed.
+  normal_hours numeric(6, 2),
+  overtime_hours numeric(6, 2),
   notes text,
   created_at timestamptz default now()
 );
