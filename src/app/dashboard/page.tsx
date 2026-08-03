@@ -6,8 +6,11 @@ import { th } from "@/lib/i18n";
 import { attachSignedPhotoUrls } from "@/lib/photos";
 import { startOfBangkokDay } from "@/lib/timezone";
 import { getShiftHourSplit } from "@/lib/pay-period";
+import { ATTENDANCE_WITH_STAFF_BASIC } from "@/lib/attendance-select";
 import type { Attendance, Profile } from "@/types/database";
 import { Users, UserCheck, UserX, ImageOff } from "lucide-react";
+
+export const dynamic = "force-dynamic";
 
 export default async function DashboardPage() {
   const supabase = await createClient();
@@ -42,7 +45,7 @@ export default async function DashboardPage() {
 
   const { data: todayAttendance, error: attendanceError } = await supabase
     .from("attendance")
-    .select("*, profiles(full_name, department, role)")
+    .select(ATTENDANCE_WITH_STAFF_BASIC)
     .gte("check_in_at", todayStart.toISOString())
     .order("check_in_at", { ascending: false });
 

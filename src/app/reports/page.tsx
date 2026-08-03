@@ -15,7 +15,10 @@ import { employmentLabel, th } from "@/lib/i18n";
 import type { Attendance, Profile } from "@/types/database";
 import { ReportsExport } from "@/components/reports-export";
 import { getBangkokParts } from "@/lib/timezone";
+import { ATTENDANCE_WITH_STAFF } from "@/lib/attendance-select";
 import { AlertTriangle } from "lucide-react";
+
+export const dynamic = "force-dynamic";
 
 export default async function ReportsPage({
   searchParams,
@@ -56,12 +59,16 @@ export default async function ReportsPage({
   }));
   const currentFortnightKey = getFortnightContaining(new Date()).key;
 
-  const { data: allRecords } = await supabase
+  const { data: allRecords, error: recordsError } = await supabase
     .from("attendance")
-    .select("*, profiles(full_name, department, employment_type, role)")
+    .select(ATTENDANCE_WITH_STAFF)
     .gte("check_in_at", period.start.toISOString())
     .lte("check_in_at", period.end.toISOString())
     .order("check_in_at", { ascending: true });
+
+  if (recordsError) {
+    console.error("Reports attendance query failed:", recordsError.message);
+  }
 
   // Admins don't check in/out and aren't paid hourly, so exclude them from
   // payroll summaries and exports to avoid confusion when running payroll.
@@ -98,6 +105,12 @@ export default async function ReportsPage({
           }
           fortnightOptions={fortnightOptions}
         />
+
+        {recordsError && (
+          <div className="rounded-xl bg-red-50 px-4 py-3 text-sm text-red-700">
+            {th.dashboardLoadError}: {recordsError.message}
+          </div>
+        )}
 
         <div className="grid grid-cols-2 gap-3">
           <div className="rounded-xl bg-blue-50 p-4">

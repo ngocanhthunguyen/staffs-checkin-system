@@ -49,7 +49,7 @@ export default async function StaffDetailPage({
 
   const { data: monthRecords } = await supabase
     .from("attendance")
-    .select("*, profiles(full_name, department)")
+    .select("*, profiles!staff_id(full_name, department)")
     .eq("staff_id", id)
     .gte("check_in_at", period.start.toISOString())
     .lte("check_in_at", period.end.toISOString());

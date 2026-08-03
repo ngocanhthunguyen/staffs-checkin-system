@@ -5,7 +5,10 @@ import { CorrectionForm } from "@/components/correction-form";
 import { CorrectionReview } from "@/components/correction-review";
 import { OvertimeReview } from "@/components/overtime-review";
 import { statusLabel, th } from "@/lib/i18n";
+import { ATTENDANCE_WITH_STAFF_NAME } from "@/lib/attendance-select";
 import type { Attendance, CorrectionRequest, Profile } from "@/types/database";
+
+export const dynamic = "force-dynamic";
 
 export default async function CorrectionsPage() {
   const supabase = await createClient();
@@ -33,7 +36,7 @@ export default async function CorrectionsPage() {
 
     const { data: pendingOt } = await supabase
       .from("attendance")
-      .select("id, check_in_at, check_out_at, normal_hours, overtime_hours, profiles(full_name)")
+      .select(ATTENDANCE_WITH_STAFF_NAME)
       .eq("overtime_status", "pending")
       .not("check_out_at", "is", null)
       .order("check_out_at", { ascending: false });
