@@ -288,6 +288,10 @@ export function buildPayrollSummary(
   unknownLabel: string
 ): PayrollSummaryRow[] {
   const byStaff = new Map<string, PayrollSummaryRow>();
+  // Unique Bangkok calendar days with at least one completed shift.
+  // Morning + afternoon check-in/out on the same day still count as 1 day
+  // (full-time are paid by day). Casual pay still uses summed hours below.
+  const daysByStaff = new Map<string, Set<string>>();
 
   for (const record of records) {
     const name = record.profiles?.full_name ?? unknownLabel;
@@ -314,7 +318,13 @@ export function buildPayrollSummary(
     }
 
     const split = getShiftHourSplit(record)!;
-    row.daysWorked += 1;
+    const { year, month, day } = getBangkokParts(new Date(record.check_in_at));
+    const dayKey = `${year}-${String(month).padStart(2, "0")}-${String(day).padStart(2, "0")}`;
+    const days = daysByStaff.get(record.staff_id) ?? new Set<string>();
+    days.add(dayKey);
+    daysByStaff.set(record.staff_id, days);
+
+    row.daysWorked = days.size;
     row.totalHours += split.total;
     row.regularHours += split.normal;
     row.overtimeHours += split.overtime;
