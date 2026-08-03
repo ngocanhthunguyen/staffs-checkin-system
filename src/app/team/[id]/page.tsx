@@ -47,12 +47,14 @@ export default async function StaffDetailPage({
   const todayParts = getBangkokParts(new Date());
   const period = getMonthlyPeriod(todayParts.year, todayParts.month);
 
-  const { data: monthRecords } = await supabase
+  const { data: monthRows } = await supabase
     .from("attendance")
-    .select("*, profiles!staff_id(full_name, department)")
+    .select("*")
     .eq("staff_id", id)
     .gte("check_in_at", period.start.toISOString())
     .lte("check_in_at", period.end.toISOString());
+
+  const monthRecords = monthRows ?? [];
 
   const [workSummary] = buildPayrollSummary(monthRecords ?? [], th.unknown);
   const attendanceHistory = [...(monthRecords ?? [])].sort(

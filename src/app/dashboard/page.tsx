@@ -6,7 +6,7 @@ import { th } from "@/lib/i18n";
 import { attachSignedPhotoUrls } from "@/lib/photos";
 import { startOfBangkokDay } from "@/lib/timezone";
 import { getShiftHourSplit } from "@/lib/pay-period";
-import { ATTENDANCE_WITH_STAFF_BASIC } from "@/lib/attendance-select";
+import { attachStaffProfiles } from "@/lib/attendance-select";
 import type { Attendance, Profile } from "@/types/database";
 import { Users, UserCheck, UserX, ImageOff } from "lucide-react";
 
@@ -43,9 +43,11 @@ export default async function DashboardPage() {
     .neq("role", "admin")
     .order("full_name");
 
-  const { data: todayAttendance, error: attendanceError } = await supabase
+  // No profiles(...) embed — two FKs to profiles make it ambiguous (see
+  // attachStaffProfiles). Select attendance alone, then join in app code.
+  const { data: todayRows, error: attendanceError } = await supabase
     .from("attendance")
-    .select(ATTENDANCE_WITH_STAFF_BASIC)
+    .select("*")
     .gte("check_in_at", todayStart.toISOString())
     .order("check_in_at", { ascending: false });
 
@@ -53,8 +55,10 @@ export default async function DashboardPage() {
     console.error("Dashboard attendance query failed:", attendanceError.message);
   }
 
-  const nonAdminAttendance = (todayAttendance ?? []).filter(
-    (a) => (a as { profiles?: { role?: string } }).profiles?.role !== "admin"
+  const todayAttendance = await attachStaffProfiles(supabase, todayRows);
+
+  const nonAdminAttendance = todayAttendance.filter(
+    (a) => a.profiles?.role !== "admin"
   );
 
   const attendanceWithPhotos = await attachSignedPhotoUrls(

@@ -5,7 +5,7 @@ import { CorrectionForm } from "@/components/correction-form";
 import { CorrectionReview } from "@/components/correction-review";
 import { OvertimeReview } from "@/components/overtime-review";
 import { statusLabel, th } from "@/lib/i18n";
-import { ATTENDANCE_WITH_STAFF_NAME } from "@/lib/attendance-select";
+import { attachStaffProfiles } from "@/lib/attendance-select";
 import type { Attendance, CorrectionRequest, Profile } from "@/types/database";
 
 export const dynamic = "force-dynamic";
@@ -34,12 +34,14 @@ export default async function CorrectionsPage() {
       .select("*, attendance(*), profiles!correction_requests_requested_by_fkey(full_name)")
       .order("created_at", { ascending: false });
 
-    const { data: pendingOt } = await supabase
+    const { data: pendingOtRows } = await supabase
       .from("attendance")
-      .select(ATTENDANCE_WITH_STAFF_NAME)
+      .select("id, staff_id, check_in_at, check_out_at, normal_hours, overtime_hours, overtime_status")
       .eq("overtime_status", "pending")
       .not("check_out_at", "is", null)
       .order("check_out_at", { ascending: false });
+
+    const pendingOt = await attachStaffProfiles(supabase, pendingOtRows);
 
     const pendingCount = (requests ?? []).filter((r) => r.status === "pending").length;
     const pendingOtCount = (pendingOt ?? []).length;
@@ -69,10 +71,14 @@ export default async function CorrectionsPage() {
                   <OvertimeReview
                     key={record.id}
                     record={{
-                      ...record,
-                      profiles: Array.isArray(record.profiles)
-                        ? record.profiles[0]
-                        : record.profiles,
+                      id: record.id,
+                      check_in_at: record.check_in_at,
+                      check_out_at: record.check_out_at,
+                      normal_hours: record.normal_hours,
+                      overtime_hours: record.overtime_hours,
+                      profiles: record.profiles
+                        ? { full_name: record.profiles.full_name }
+                        : null,
                     }}
                   />
                 ))

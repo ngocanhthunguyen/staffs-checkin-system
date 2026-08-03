@@ -15,7 +15,7 @@ import { employmentLabel, th } from "@/lib/i18n";
 import type { Attendance, Profile } from "@/types/database";
 import { ReportsExport } from "@/components/reports-export";
 import { getBangkokParts } from "@/lib/timezone";
-import { ATTENDANCE_WITH_STAFF } from "@/lib/attendance-select";
+import { attachStaffProfiles } from "@/lib/attendance-select";
 import { AlertTriangle } from "lucide-react";
 
 export const dynamic = "force-dynamic";
@@ -59,9 +59,9 @@ export default async function ReportsPage({
   }));
   const currentFortnightKey = getFortnightContaining(new Date()).key;
 
-  const { data: allRecords, error: recordsError } = await supabase
+  const { data: rawRecords, error: recordsError } = await supabase
     .from("attendance")
-    .select(ATTENDANCE_WITH_STAFF)
+    .select("*")
     .gte("check_in_at", period.start.toISOString())
     .lte("check_in_at", period.end.toISOString())
     .order("check_in_at", { ascending: true });
@@ -70,11 +70,11 @@ export default async function ReportsPage({
     console.error("Reports attendance query failed:", recordsError.message);
   }
 
+  const allRecords = await attachStaffProfiles(supabase, rawRecords);
+
   // Admins don't check in/out and aren't paid hourly, so exclude them from
   // payroll summaries and exports to avoid confusion when running payroll.
-  const records = (allRecords ?? []).filter(
-    (r) => (r as { profiles?: { role?: string } }).profiles?.role !== "admin"
-  );
+  const records = allRecords.filter((r) => r.profiles?.role !== "admin");
 
   const summary = buildPayrollSummary(records, th.unknown);
   const totalPayableHours = summary.reduce((s, r) => s + r.totalHours, 0);
