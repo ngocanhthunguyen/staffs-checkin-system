@@ -40,11 +40,15 @@ export default async function DashboardPage() {
     .neq("role", "admin")
     .order("full_name");
 
-  const { data: todayAttendance } = await supabase
+  const { data: todayAttendance, error: attendanceError } = await supabase
     .from("attendance")
     .select("*, profiles(full_name, department, role)")
     .gte("check_in_at", todayStart.toISOString())
     .order("check_in_at", { ascending: false });
+
+  if (attendanceError) {
+    console.error("Dashboard attendance query failed:", attendanceError.message);
+  }
 
   const nonAdminAttendance = (todayAttendance ?? []).filter(
     (a) => (a as { profiles?: { role?: string } }).profiles?.role !== "admin"
@@ -74,6 +78,12 @@ export default async function DashboardPage() {
             })}
           </p>
         </div>
+
+        {attendanceError && (
+          <div className="rounded-xl bg-red-50 px-4 py-3 text-sm text-red-700">
+            {th.dashboardLoadError}: {attendanceError.message}
+          </div>
+        )}
 
         <div className="grid grid-cols-3 gap-3">
           <StatCard icon={UserCheck} label={th.checkedInCount} value={checkedIn.length} color="green" />

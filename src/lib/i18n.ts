@@ -113,6 +113,10 @@ export const th = {
 
   // Dashboard
   todayDashboard: bi("สรุปวันนี้", "Today's Dashboard"),
+  dashboardLoadError: bi(
+    "โหลดข้อมูลเข้างานไม่สำเร็จ",
+    "Could not load today's attendance"
+  ),
   checkedInCount: bi("เข้างานแล้ว", "Checked in"),
   checkedOutCount: bi("ออกงานแล้ว", "Checked out"),
   notInYet: bi("ยังไม่เข้างาน", "Not in yet"),
