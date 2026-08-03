@@ -113,11 +113,35 @@ export function CheckInPanel({
         }
       }
 
+      // Re-read the split after GPS (can take several seconds) so we send
+      // the latest Normal/OT values the staff member entered.
+      let outNormal = normal;
+      let outOt = ot;
+      if (action === "out" && openAttendance) {
+        const freshTotal = roundHours(
+          getHoursBetween(openAttendance.check_in_at, null)
+        );
+        outNormal = Number(normalHours);
+        outOt = Number(otHours);
+        if (
+          !Number.isFinite(outNormal) ||
+          !Number.isFinite(outOt) ||
+          outNormal < 0 ||
+          outOt < 0
+        ) {
+          outNormal = freshTotal;
+          outOt = 0;
+        } else if (Math.abs(outNormal + outOt - freshTotal) > 0.05) {
+          outOt = Math.min(Math.max(0, outOt), freshTotal);
+          outNormal = roundHours(Math.max(0, freshTotal - outOt));
+        }
+      }
+
       try {
         const result =
           action === "in"
             ? await checkIn(lat, lng, photoDataUrl)
-            : await checkOut(lat, lng, photoDataUrl, normal, ot);
+            : await checkOut(lat, lng, photoDataUrl, outNormal, outOt);
 
         if (result.error) {
           setError(result.error);

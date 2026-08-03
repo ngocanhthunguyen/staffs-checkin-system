@@ -107,13 +107,20 @@ export async function checkOut(
 
   if (!user) return { error: th.notAuthenticated };
 
-  const { data: openSession } = await supabase
+  // Prefer the most recent open shift. `.maybeSingle()` errors when a staff
+  // member somehow has two open rows, which then looked like "not checked in"
+  // and blocked checkout entirely.
+  const { data: openSessions, error: openError } = await supabase
     .from("attendance")
     .select("id, check_in_at")
     .eq("staff_id", user.id)
     .is("check_out_at", null)
-    .maybeSingle();
+    .order("check_in_at", { ascending: false })
+    .limit(1);
 
+  if (openError) return { error: openError.message };
+
+  const openSession = openSessions?.[0];
   if (!openSession) return { error: th.notCheckedIn };
 
   const checkOutAt = new Date();
@@ -122,16 +129,31 @@ export async function checkOut(
     (checkOutAt.getTime() - new Date(openSession.check_in_at).getTime()) / 3600000
   );
 
-  const normal = Number(normalHours);
-  const ot = Number(overtimeHours);
-
+  // Staff declare a Normal/OT split, but we always normalize it to the
+  // exact elapsed total at check-out time. That way a few seconds of GPS
+  // delay (or floating-point rounding) can never block checkout.
+  let normal = Number(normalHours);
+  let ot = Number(overtimeHours);
   if (!Number.isFinite(normal) || !Number.isFinite(ot) || normal < 0 || ot < 0) {
-    return { error: th.hoursMustMatch };
+    normal = totalHours;
+    ot = 0;
   }
-
-  // Allow a small rounding tolerance (0.05 hrs ≈ 3 minutes).
-  if (Math.abs(normal + ot - totalHours) > 0.05) {
-    return { error: th.hoursMustMatch };
+  const declared = normal + ot;
+  if (declared <= 0) {
+    normal = totalHours;
+    ot = 0;
+  } else {
+    normal = (normal / declared) * totalHours;
+    ot = totalHours - normal;
+  }
+  normal = Math.round(normal * 100) / 100;
+  ot = Math.round(ot * 100) / 100;
+  // Fix any 0.01 rounding drift so Normal + OT still equals the rounded total.
+  const roundedTotal = Math.round(totalHours * 100) / 100;
+  ot = Math.round((roundedTotal - normal) * 100) / 100;
+  if (ot < 0) {
+    ot = 0;
+    normal = roundedTotal;
   }
 
   const photoPath = await uploadCheckPhoto(supabase, user.id, photoDataUrl, "out");
@@ -143,12 +165,36 @@ export async function checkOut(
       check_out_lat: lat ?? null,
       check_out_lng: lng ?? null,
       check_out_photo_path: photoPath,
-      normal_hours: Math.round(normal * 100) / 100,
-      overtime_hours: Math.round(ot * 100) / 100,
+      normal_hours: normal,
+      overtime_hours: ot,
     })
     .eq("id", openSession.id);
 
-  if (error) return { error: error.message };
+  if (error) {
+    // Most common cause right after deploying the OT split: the new columns
+    // haven't been added in Supabase yet. Fall back to a plain checkout so
+    // staff aren't stuck, and log clearly for the admin.
+    const missingColumn =
+      /normal_hours|overtime_hours|schema cache/i.test(error.message);
+    if (missingColumn) {
+      console.error(
+        "Checkout: normal_hours/overtime_hours columns missing — run migration 009. Falling back without OT split.",
+        error.message
+      );
+      const { error: fallbackError } = await supabase
+        .from("attendance")
+        .update({
+          check_out_at: checkOutAt.toISOString(),
+          check_out_lat: lat ?? null,
+          check_out_lng: lng ?? null,
+          check_out_photo_path: photoPath,
+        })
+        .eq("id", openSession.id);
+      if (fallbackError) return { error: fallbackError.message };
+    } else {
+      return { error: error.message };
+    }
+  }
 
   revalidatePath("/");
   revalidatePath("/dashboard");
