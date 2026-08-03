@@ -3,6 +3,7 @@ import { createClient } from "@/lib/supabase/server";
 import { AppShell } from "@/components/app-shell";
 import { CorrectionForm } from "@/components/correction-form";
 import { CorrectionReview } from "@/components/correction-review";
+import { OvertimeReview } from "@/components/overtime-review";
 import { statusLabel, th } from "@/lib/i18n";
 import type { Attendance, CorrectionRequest, Profile } from "@/types/database";
 
@@ -30,15 +31,51 @@ export default async function CorrectionsPage() {
       .select("*, attendance(*), profiles!correction_requests_requested_by_fkey(full_name)")
       .order("created_at", { ascending: false });
 
+    const { data: pendingOt } = await supabase
+      .from("attendance")
+      .select("id, check_in_at, check_out_at, normal_hours, overtime_hours, profiles(full_name)")
+      .eq("overtime_status", "pending")
+      .not("check_out_at", "is", null)
+      .order("check_out_at", { ascending: false });
+
     const pendingCount = (requests ?? []).filter((r) => r.status === "pending").length;
+    const pendingOtCount = (pendingOt ?? []).length;
 
     return (
       <AppShell profile={profile as Profile}>
         <div className="space-y-6">
           <div>
             <h1 className="text-xl font-bold">{th.correctionsTitle}</h1>
-            <p className="text-sm text-slate-500">{th.pendingReview(pendingCount)}</p>
+            <p className="text-sm text-slate-500">
+              {th.pendingReview(pendingCount)}
+              {pendingOtCount > 0 && ` · ${pendingOtCount} ${th.pendingOtHours}`}
+            </p>
           </div>
+
+          <section>
+            <h2 className="mb-3 text-sm font-semibold uppercase tracking-wide text-slate-500">
+              {th.pendingOtReview}
+            </h2>
+            <div className="space-y-3">
+              {(pendingOt ?? []).length === 0 ? (
+                <p className="rounded-xl bg-slate-100 px-4 py-6 text-center text-sm text-slate-500">
+                  {th.noPendingOt}
+                </p>
+              ) : (
+                (pendingOt ?? []).map((record) => (
+                  <OvertimeReview
+                    key={record.id}
+                    record={{
+                      ...record,
+                      profiles: Array.isArray(record.profiles)
+                        ? record.profiles[0]
+                        : record.profiles,
+                    }}
+                  />
+                ))
+              )}
+            </div>
+          </section>
 
           <section>
             <h2 className="mb-3 text-sm font-semibold uppercase tracking-wide text-slate-500">

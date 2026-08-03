@@ -40,6 +40,8 @@ create table public.profiles (
 );
 
 -- Attendance records
+create type public.overtime_status as enum ('none', 'pending', 'approved', 'rejected');
+
 create table public.attendance (
   id uuid primary key default uuid_generate_v4(),
   staff_id uuid not null references public.profiles(id) on delete cascade,
@@ -56,6 +58,10 @@ create table public.attendance (
   -- Null while the shift is still open, or for legacy records before this column existed.
   normal_hours numeric(6, 2),
   overtime_hours numeric(6, 2),
+  overtime_status public.overtime_status not null default 'none',
+  overtime_reviewed_by uuid references public.profiles(id),
+  overtime_reviewed_at timestamptz,
+  overtime_review_notes text,
   notes text,
   created_at timestamptz default now()
 );

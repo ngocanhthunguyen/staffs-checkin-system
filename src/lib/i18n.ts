@@ -226,13 +226,13 @@ export const th = {
   regularHours: bi("ชั่วโมงปกติ", "Normal hours"),
   overtimeHours: bi("ชั่วโมงล่วงเวลา (OT)", "Overtime (OT) hours"),
   overtimeHint: bi(
-    "ชั่วโมงปกติและ OT แยกตามที่พนักงานระบุตอนออกงาน",
-    "Normal and OT hours are recorded separately by staff at check-out"
+    "ชั่วโมง OT ต้องรอแอดมินอนุมัติก่อนจึงจะนับในเงินเดือน",
+    "OT hours need admin approval before they count in payroll"
   ),
   splitHoursTitle: bi("แยกชั่วโมงทำงาน", "Split today's hours"),
   splitHoursHint: bi(
-    "กรุณาระบุชั่วโมงปกติและ OT ให้รวมเท่ากับเวลาที่ทำงานวันนี้",
-    "Enter Normal and OT hours so they add up to the time worked today"
+    "กรุณาระบุชั่วโมงปกติและ OT ให้รวมเท่ากับเวลาที่ทำงานวันนี้ — OT จะรอแอดมินอนุมัติ",
+    "Enter Normal and OT hours so they add up to time worked — OT waits for admin approval"
   ),
   allNormal: bi("ปกติทั้งหมด", "All normal"),
   allOvertime: bi("OT ทั้งหมด", "All OT"),
@@ -243,6 +243,20 @@ export const th = {
   totalWorked: bi("เวลาที่ทำงาน", "Time worked"),
   normalHoursShort: bi("ปกติ", "Normal"),
   otHoursShort: bi("OT", "OT"),
+  otPendingApproval: bi("OT รออนุมัติ", "OT pending approval"),
+  otApproved: bi("OT อนุมัติแล้ว", "OT approved"),
+  otRejected: bi("OT ถูกปฏิเสธ", "OT rejected"),
+  pendingOtReview: bi("อนุมัติ OT", "OT approvals"),
+  noPendingOt: bi("ไม่มี OT ที่รออนุมัติ", "No pending OT claims"),
+  approveOt: bi("อนุมัติ OT", "Approve OT"),
+  rejectOt: bi("ปฏิเสธ OT", "Reject OT"),
+  otAlreadyReviewed: bi("OT นี้ถูกพิจารณาแล้ว", "This OT claim was already reviewed"),
+  otRejectedHint: bi(
+    "ปฏิเสธแล้ว — ชั่วโมงนั้นจะนับเป็นชั่วโมงปกติ (ไม่ใช่ OT)",
+    "Rejected — those hours count as normal (not OT)"
+  ),
+  pendingOtHours: bi("OT รออนุมัติ", "Pending OT hours"),
+  claimedOt: bi("OT ที่ขอ", "Claimed OT"),
 
   // Staff profile detail
   staffProfile: bi("ข้อมูลพนักงาน", "Staff Profile"),

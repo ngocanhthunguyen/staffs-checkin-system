@@ -101,8 +101,17 @@ export default async function HistoryPage() {
                       {th.normalHoursShort} {split.normal.toFixed(1)} {th.hours}
                       {" · "}
                       <span className="text-purple-600">
-                        {th.otHoursShort} {split.overtime.toFixed(1)} {th.hours}
+                        {th.otHoursShort} {split.declaredOvertime.toFixed(1)} {th.hours}
                       </span>
+                      {split.overtimeStatus === "pending" && (
+                        <span className="ml-1 text-amber-600">({th.otPendingApproval})</span>
+                      )}
+                      {split.overtimeStatus === "approved" && (
+                        <span className="ml-1 text-green-600">({th.otApproved})</span>
+                      )}
+                      {split.overtimeStatus === "rejected" && (
+                        <span className="ml-1 text-red-600">({th.otRejected})</span>
+                      )}
                     </p>
                   );
                 })()}

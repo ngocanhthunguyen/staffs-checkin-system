@@ -72,6 +72,7 @@ export default async function ReportsPage({
   const summary = buildPayrollSummary(records, th.unknown);
   const totalPayableHours = summary.reduce((s, r) => s + r.totalHours, 0);
   const totalOvertimeHours = summary.reduce((s, r) => s + r.overtimeHours, 0);
+  const totalPendingOt = summary.reduce((s, r) => s + r.pendingOvertimeHours, 0);
   const totalIncomplete = summary.reduce((s, r) => s + r.incompleteShifts, 0);
 
   return (
@@ -111,15 +112,21 @@ export default async function ReportsPage({
               {totalOvertimeHours.toFixed(1)} {th.hours}
             </p>
           </div>
-          <div className="col-span-2 rounded-xl bg-amber-50 p-4">
+          {totalPendingOt > 0 && (
+            <div className="rounded-xl bg-violet-50 p-4">
+              <p className="text-xs text-violet-700">{th.pendingOtHours}</p>
+              <p className="text-2xl font-bold text-violet-900">
+                {totalPendingOt.toFixed(1)} {th.hours}
+              </p>
+            </div>
+          )}
+          <div className={`rounded-xl bg-amber-50 p-4 ${totalPendingOt > 0 ? "" : "col-span-2"}`}>
             <p className="text-xs text-amber-700">{th.incompleteShifts}</p>
             <p className="text-2xl font-bold text-amber-900">{totalIncomplete}</p>
           </div>
         </div>
 
-        {totalOvertimeHours > 0 && (
-          <p className="text-center text-xs text-slate-400">{th.overtimeHint}</p>
-        )}
+        <p className="text-center text-xs text-slate-400">{th.overtimeHint}</p>
 
         {totalIncomplete > 0 && (
           <div className="flex items-start gap-2 rounded-xl bg-amber-50 px-4 py-3 text-sm text-amber-800">
@@ -182,6 +189,12 @@ export default async function ReportsPage({
                       {th.normalHoursShort} {data.regularHours.toFixed(1)}
                       {" · "}
                       {th.otHoursShort} {data.overtimeHours.toFixed(1)}
+                      {data.pendingOvertimeHours > 0 && (
+                        <span className="text-purple-600">
+                          {" · "}
+                          {th.pendingOtHours} {data.pendingOvertimeHours.toFixed(1)}
+                        </span>
+                      )}
                     </p>
                   </div>
                 </div>
@@ -226,8 +239,17 @@ export default async function ReportsPage({
                       {th.normalHoursShort} {split.normal.toFixed(1)} {th.hours}
                       {" · "}
                       <span className="text-purple-600">
-                        {th.otHoursShort} {split.overtime.toFixed(1)} {th.hours}
+                        {th.otHoursShort} {split.declaredOvertime.toFixed(1)} {th.hours}
                       </span>
+                      {split.overtimeStatus === "pending" && (
+                        <span className="ml-1 text-amber-600">({th.otPendingApproval})</span>
+                      )}
+                      {split.overtimeStatus === "approved" && (
+                        <span className="ml-1 text-green-600">({th.otApproved})</span>
+                      )}
+                      {split.overtimeStatus === "rejected" && (
+                        <span className="ml-1 text-red-600">({th.otRejected})</span>
+                      )}
                     </p>
                   )}
                 </div>

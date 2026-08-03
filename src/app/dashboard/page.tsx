@@ -206,8 +206,11 @@ function StaffRow({ record, status }: { record: AttendanceRow; status: "in" | "o
             {th.normalHoursShort} {split.normal.toFixed(1)}
             {" · "}
             <span className="text-purple-600">
-              {th.otHoursShort} {split.overtime.toFixed(1)}
+              {th.otHoursShort} {split.declaredOvertime.toFixed(1)}
             </span>
+            {split.overtimeStatus === "pending" && (
+              <span className="ml-1 text-amber-600">({th.otPendingApproval})</span>
+            )}
           </p>
         )}
       </div>

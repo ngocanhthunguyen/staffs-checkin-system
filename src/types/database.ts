@@ -3,6 +3,7 @@ export type CorrectionStatus = "pending" | "approved" | "rejected";
 export type LeaveType = "sick" | "annual";
 export type LeaveStatus = "pending" | "approved" | "rejected";
 export type EmploymentType = "full_time" | "part_time";
+export type OvertimeStatus = "none" | "pending" | "approved" | "rejected";
 
 export interface Site {
   id: string;
@@ -44,6 +45,10 @@ export interface Attendance {
   normal_hours: number | null;
   /** Declared at check-out. Null while open or on legacy records. */
   overtime_hours: number | null;
+  overtime_status: OvertimeStatus;
+  overtime_reviewed_by: string | null;
+  overtime_reviewed_at: string | null;
+  overtime_review_notes: string | null;
   notes: string | null;
   created_at: string;
   profiles?: Profile;

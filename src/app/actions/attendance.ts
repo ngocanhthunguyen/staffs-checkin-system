@@ -158,6 +158,8 @@ export async function checkOut(
 
   const photoPath = await uploadCheckPhoto(supabase, user.id, photoDataUrl, "out");
 
+  const overtimeStatus = ot > 0 ? "pending" : "none";
+
   const { error } = await supabase
     .from("attendance")
     .update({
@@ -167,6 +169,10 @@ export async function checkOut(
       check_out_photo_path: photoPath,
       normal_hours: normal,
       overtime_hours: ot,
+      overtime_status: overtimeStatus,
+      overtime_reviewed_by: null,
+      overtime_reviewed_at: null,
+      overtime_review_notes: null,
     })
     .eq("id", openSession.id);
 
@@ -175,10 +181,10 @@ export async function checkOut(
     // haven't been added in Supabase yet. Fall back to a plain checkout so
     // staff aren't stuck, and log clearly for the admin.
     const missingColumn =
-      /normal_hours|overtime_hours|schema cache/i.test(error.message);
+      /normal_hours|overtime_hours|overtime_status|schema cache/i.test(error.message);
     if (missingColumn) {
       console.error(
-        "Checkout: normal_hours/overtime_hours columns missing — run migration 009. Falling back without OT split.",
+        "Checkout: OT columns missing — run migrations 009/010. Falling back without OT split.",
         error.message
       );
       const { error: fallbackError } = await supabase
@@ -200,6 +206,63 @@ export async function checkOut(
   revalidatePath("/dashboard");
   revalidatePath("/reports");
   revalidatePath("/history");
+  revalidatePath("/corrections");
+  return { success: true };
+}
+
+export async function reviewOvertime(
+  attendanceId: string,
+  status: "approved" | "rejected",
+  reviewNotes?: string
+) {
+  const supabase = await createClient();
+  const {
+    data: { user },
+  } = await supabase.auth.getUser();
+
+  if (!user) return { error: th.notAuthenticated };
+
+  const { data: profile } = await supabase
+    .from("profiles")
+    .select("role")
+    .eq("id", user.id)
+    .single();
+
+  if (!profile || !["manager", "admin"].includes(profile.role)) {
+    return { error: th.unauthorized };
+  }
+
+  const { data: record } = await supabase
+    .from("attendance")
+    .select("id, overtime_hours, overtime_status")
+    .eq("id", attendanceId)
+    .single();
+
+  if (!record) return { error: th.requestNotFound };
+  if (record.overtime_status !== "pending") {
+    return { error: th.otAlreadyReviewed };
+  }
+  if (!record.overtime_hours || Number(record.overtime_hours) <= 0) {
+    return { error: th.requestNotFound };
+  }
+
+  const { error } = await supabase
+    .from("attendance")
+    .update({
+      overtime_status: status,
+      overtime_reviewed_by: user.id,
+      overtime_reviewed_at: new Date().toISOString(),
+      overtime_review_notes: reviewNotes?.trim() || null,
+    })
+    .eq("id", attendanceId);
+
+  if (error) return { error: error.message };
+
+  revalidatePath("/corrections");
+  revalidatePath("/reports");
+  revalidatePath("/dashboard");
+  revalidatePath("/history");
+  revalidatePath("/team");
   return { success: true };
 }
 

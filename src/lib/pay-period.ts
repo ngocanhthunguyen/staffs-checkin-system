@@ -170,6 +170,7 @@ export interface PayrollSummaryRow {
   totalHours: number;
   regularHours: number;
   overtimeHours: number;
+  pendingOvertimeHours: number;
   incompleteShifts: number;
 }
 
@@ -180,6 +181,7 @@ export interface AttendanceForPayroll {
   check_out_at: string | null;
   normal_hours?: number | null;
   overtime_hours?: number | null;
+  overtime_status?: string | null;
   profiles?: {
     full_name: string;
     department: string | null;
@@ -187,13 +189,30 @@ export interface AttendanceForPayroll {
   };
 }
 
-/** Prefer staff-declared Normal/OT; fall back for legacy rows that predate the split. */
+export interface ShiftHourSplit {
+  total: number;
+  /** Hours that count as normal/regular for payroll. */
+  normal: number;
+  /** Approved OT hours only (payable as OT). */
+  overtime: number;
+  /** Staff-claimed OT still waiting for manager approval. */
+  pendingOvertime: number;
+  /** Raw OT hours the staff member declared (any status). */
+  declaredOvertime: number;
+  overtimeStatus: "none" | "pending" | "approved" | "rejected";
+}
+
+/**
+ * Prefer staff-declared Normal/OT. For payroll, only *approved* OT counts as
+ * overtime — pending claims are held aside, and rejected OT is paid as normal.
+ */
 export function getShiftHourSplit(record: {
   check_in_at: string;
   check_out_at: string | null;
   normal_hours?: number | null;
   overtime_hours?: number | null;
-}): { total: number; normal: number; overtime: number } | null {
+  overtime_status?: string | null;
+}): ShiftHourSplit | null {
   if (!record.check_out_at) return null;
 
   const total = Math.max(
@@ -203,18 +222,64 @@ export function getShiftHourSplit(record: {
   );
 
   if (record.normal_hours != null && record.overtime_hours != null) {
+    const declaredNormal = Number(record.normal_hours);
+    const declaredOt = Number(record.overtime_hours);
+    const status = (record.overtime_status ??
+      (declaredOt > 0 ? "pending" : "none")) as ShiftHourSplit["overtimeStatus"];
+
+    if (status === "approved") {
+      return {
+        total,
+        normal: declaredNormal,
+        overtime: declaredOt,
+        pendingOvertime: 0,
+        declaredOvertime: declaredOt,
+        overtimeStatus: status,
+      };
+    }
+
+    if (status === "pending") {
+      return {
+        total,
+        normal: declaredNormal,
+        overtime: 0,
+        pendingOvertime: declaredOt,
+        declaredOvertime: declaredOt,
+        overtimeStatus: status,
+      };
+    }
+
+    if (status === "rejected") {
+      // Time was still worked — pay it as normal, just not as OT.
+      return {
+        total,
+        normal: declaredNormal + declaredOt,
+        overtime: 0,
+        pendingOvertime: 0,
+        declaredOvertime: declaredOt,
+        overtimeStatus: status,
+      };
+    }
+
     return {
       total,
-      normal: Number(record.normal_hours),
-      overtime: Number(record.overtime_hours),
+      normal: declaredNormal,
+      overtime: 0,
+      pendingOvertime: 0,
+      declaredOvertime: declaredOt,
+      overtimeStatus: "none",
     };
   }
 
   // Legacy records: keep the old auto 8-hour split so existing payroll isn't wiped.
+  const legacyOt = Math.max(0, total - LEGACY_OVERTIME_THRESHOLD_HOURS);
   return {
     total,
     normal: Math.min(total, LEGACY_OVERTIME_THRESHOLD_HOURS),
-    overtime: Math.max(0, total - LEGACY_OVERTIME_THRESHOLD_HOURS),
+    overtime: legacyOt,
+    pendingOvertime: 0,
+    declaredOvertime: legacyOt,
+    overtimeStatus: legacyOt > 0 ? "approved" : "none",
   };
 }
 
@@ -238,6 +303,7 @@ export function buildPayrollSummary(
         totalHours: 0,
         regularHours: 0,
         overtimeHours: 0,
+        pendingOvertimeHours: 0,
         incompleteShifts: 0,
       };
 
@@ -252,6 +318,7 @@ export function buildPayrollSummary(
     row.totalHours += split.total;
     row.regularHours += split.normal;
     row.overtimeHours += split.overtime;
+    row.pendingOvertimeHours += split.pendingOvertime;
     byStaff.set(record.staff_id, row);
   }
 
