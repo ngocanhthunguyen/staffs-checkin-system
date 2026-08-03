@@ -148,6 +148,8 @@ export const th = {
   ),
   totalPayableHours: bi("ชั่วโมงจ่ายเงินรวม", "Total payable hours"),
   exportPayroll: bi("ส่งออกเงินเดือน", "Export payroll"),
+  exportNormalHours: bi("ส่งออกชั่วโมงปกติ", "Export normal hours"),
+  exportOtHours: bi("ส่งออกชั่วโมง OT", "Export OT hours"),
   go: bi("ดู", "Go"),
   exportCsv: bi("ส่งออก CSV", "Export CSV"),
   myPayPeriodHours: bi("ชั่วโมงรอบจ่ายเงินนี้", "Hours this pay period"),
